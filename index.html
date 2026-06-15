@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Basavakiran Nidode — Embedded Systems Engineer</title>
+<meta name="description" content="Embedded Systems Engineer — Linux · Qt6 · CUDA · Computer Vision · Hardware Validation">
+<meta name="keywords" content="embedded linux, qt6, cuda, computer vision, COTS, device drivers, yocto, RTOS, PCIe, hardware validation">
+<meta property="og:title" content="Basavakiran — Engineering OS">
+<meta property="og:description" content="Embedded engineer who builds things that actually work. Linux · Qt · CUDA · CV.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#7c3aed">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#03030a;--bg2:#08080f;--bg3:#0e0e1c;
+  --text:#f0f0ff;--muted:#45455a;--muted2:#8080aa;
+  --v:#7c3aed;--v2:#8b5cf6;--v3:#a78bfa;--v4:#c4b5fd;
+  --pink:#ec4899;--cyan:#06b6d4;--green:#10b981;--amber:#f59e0b;
+  --border:rgba(139,92,246,.07);--border2:rgba(139,92,246,.18);
+  --font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;--display:'Syne',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;cursor:none;transition:background .5s}
+#cur{position:fixed;width:8px;height:8px;border-radius:50%;background:var(--v3);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .15s,height .15s}
+#cur-ring{position:fixed;width:32px;height:32px;border-radius:50%;border:1.5px solid rgba(167,139,250,.5);pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .3s,height .3s}
+#cur-trail{position:fixed;pointer-events:none;z-index:9997}
+.trail-dot{position:absolute;border-radius:50%;background:var(--v2);transform:translate(-50%,-50%);pointer-events:none}
+body:has(a:hover) #cur,body:has(.btn:hover) #cur{width:16px;height:16px;background:var(--pink);mix-blend-mode:normal}
+body:has(a:hover) #cur-ring,body:has(.btn:hover) #cur-ring{width:52px;height:52px}
+#bg-canvas,#particle-canvas{position:fixed;inset:0;pointer-events:none}
+#bg-canvas{z-index:0}#particle-canvas{z-index:1}
+.noise{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.018;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.grid-bg{position:fixed;inset:0;z-index:1;pointer-events:none;background-image:linear-gradient(rgba(124,58,237,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,58,237,.03) 1px,transparent 1px);background-size:70px 70px}
+#loader{position:fixed;inset:0;background:var(--bg);z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 1s,visibility 1s;overflow:hidden}
+#loader.out{opacity:0;visibility:hidden;pointer-events:none}
+#loader::before{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.08) 2px,rgba(0,0,0,.08) 4px)}
+.boot-wrap{width:min(680px,90vw);font-family:var(--mono);font-size:12px;position:relative;z-index:2}
+.boot-head{display:flex;align-items:center;gap:14px;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid rgba(139,92,246,.15)}
+.boot-logo{font-family:var(--display);font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,var(--v3),var(--pink),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.boot-sysname{color:var(--v4);font-size:13px;letter-spacing:.06em}
+.boot-syssub{color:var(--muted2);font-size:10px;margin-top:2px}
+.boot-log{height:220px;overflow:hidden;display:flex;flex-direction:column;gap:3px;position:relative}
+.boot-log::after{content:'';position:absolute;bottom:0;left:0;right:0;height:40px;background:linear-gradient(transparent,var(--bg));pointer-events:none}
+.boot-line{display:flex;align-items:baseline;gap:10px;opacity:0;animation:bIn .15s ease forwards;color:var(--muted2);line-height:1.5;font-size:11px}
+@keyframes bIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.boot-ts{color:rgba(139,92,246,.5);min-width:80px;flex-shrink:0;font-size:10px}
+.boot-ok{color:var(--green);margin-left:8px;font-size:10px;opacity:0;animation:okF .3s ease forwards}
+@keyframes okF{0%{opacity:0;transform:scale(.8)}50%{opacity:1;color:#fff}100%{opacity:1;color:var(--green)}}
+.boot-warn{color:var(--amber)}.boot-fin{color:var(--v4);font-size:13px;font-weight:700;letter-spacing:.1em}
+.boot-prog-wrap{margin-top:1.5rem;padding-top:1rem;border-top:1px solid rgba(139,92,246,.1)}
+.boot-prog-lbl{display:flex;justify-content:space-between;margin-bottom:6px;font-size:10px;color:var(--muted2)}
+.boot-prog-bar{height:2px;background:rgba(255,255,255,.05);border-radius:1px;overflow:hidden}
+.boot-prog-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--v),var(--pink),var(--cyan));border-radius:1px;transition:width .1s linear}
+.boot-skip{margin-top:1.2rem;text-align:right;font-size:10px;color:var(--muted);opacity:0;animation:fIn .5s ease 1s forwards;cursor:default}
+.boot-skip span{color:var(--v3);border:1px solid rgba(139,92,246,.25);padding:2px 8px;border-radius:4px;margin-left:4px}
+@keyframes fIn{to{opacity:1}}
+nav{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:100;background:rgba(8,8,15,.6);backdrop-filter:blur(28px);border:1px solid var(--border2);border-radius:50px;padding:.65rem 1.6rem;display:flex;align-items:center;gap:2rem;opacity:0;animation:nIn .7s ease .3s forwards;transition:background .5s,border-color .5s}
+@keyframes nIn{to{opacity:1}}
+.nav-logo{font-family:var(--mono);font-size:12px;color:var(--v4);letter-spacing:.06em;cursor:default;user-select:none}
+.nav-links{display:flex;gap:1.8rem;list-style:none}
+.nav-links a{color:var(--muted2);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s}
+.nav-links a:hover,.nav-links a.active{color:var(--v4)}
+.nav-cmd{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--border2);border-radius:5px;padding:3px 8px;background:transparent;cursor:default;transition:all .2s;white-space:nowrap}
+.nav-cmd:hover{border-color:var(--v3);color:var(--v3)}
+.nav-mob{display:none;flex-direction:column;gap:4px;cursor:default;padding:4px;background:transparent;border:none}
+.nav-mob span{width:18px;height:1.5px;background:var(--muted2);border-radius:2px;display:block;transition:all .3s}
+#cmd-overlay{position:fixed;inset:0;z-index:9990;background:rgba(3,3,10,.78);backdrop-filter:blur(16px);display:flex;align-items:flex-start;justify-content:center;padding-top:14vh;opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s}
+#cmd-overlay.open{opacity:1;visibility:visible}
+#cmd-palette{width:min(600px,92vw);background:rgba(10,10,20,.97);border:1px solid rgba(139,92,246,.28);border-radius:16px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.75),0 0 0 1px rgba(139,92,246,.05);transform:scale(.95) translateY(-10px);transition:transform .25s cubic-bezier(.16,1,.3,1)}
+#cmd-overlay.open #cmd-palette{transform:scale(1) translateY(0)}
+.cmd-inp-wrap{display:flex;align-items:center;gap:12px;padding:1rem 1.25rem;border-bottom:1px solid rgba(139,92,246,.1)}
+.cmd-ico{color:var(--v3);font-size:16px;flex-shrink:0}
+#cmd-input{flex:1;background:none;border:none;outline:none;font-family:var(--mono);font-size:14px;color:var(--text);letter-spacing:.02em}
+#cmd-input::placeholder{color:var(--muted2)}
+.cmd-esc-key{font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--border2);border-radius:4px;padding:2px 7px;flex-shrink:0}
+.cmd-results{max-height:380px;overflow-y:auto;padding:.4rem 0}
+.cmd-results::-webkit-scrollbar{width:3px}
+.cmd-results::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.cmd-group-lbl{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;padding:.55rem 1.25rem .3rem}
+.cmd-row{display:flex;align-items:center;gap:12px;padding:.68rem 1.25rem;cursor:default;transition:background .1s;position:relative}
+.cmd-row:hover,.cmd-row.active{background:rgba(139,92,246,.09)}
+.cmd-row.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--v2);border-radius:0 2px 2px 0}
+.cmd-row-ico{width:30px;height:30px;border-radius:7px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.15);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.cmd-row-lbl{flex:1;font-size:13px;font-weight:500}
+.cmd-row-lbl mark{background:none;color:var(--v3);font-weight:700}
+.cmd-row-lbl small{display:block;font-size:11px;color:var(--muted2);font-weight:400;font-family:var(--mono);margin-top:1px}
+.cmd-shortcut{font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--border2);border-radius:4px;padding:2px 6px}
+.cmd-foot{display:flex;align-items:center;gap:1.5rem;padding:.65rem 1.25rem;border-top:1px solid rgba(139,92,246,.08);font-family:var(--mono);font-size:10px;color:var(--muted)}
+.cmd-foot kbd{border:1px solid var(--border2);border-radius:3px;padding:1px 5px;margin-right:3px;font-family:var(--mono)}
+#theme-toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(20px);z-index:9980;background:rgba(10,10,20,.93);backdrop-filter:blur(12px);border:1px solid var(--border2);border-radius:8px;padding:.5rem 1rem;font-family:var(--mono);font-size:11px;color:var(--v4);opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;display:flex;align-items:center;gap:8px}
+#theme-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast-dot{width:6px;height:6px;border-radius:50%;background:var(--v2)}
+body.theme-kernel{--bg:#020a03;--bg2:#040f05;--bg3:#081a09;--v:#16a34a;--v2:#22c55e;--v3:#4ade80;--v4:#86efac;--pink:#84cc16;--cyan:#a3e635;--border:rgba(34,197,94,.07);--border2:rgba(34,197,94,.18)}
+body.theme-plasma{--bg:#020a0f;--bg2:#03111a;--bg3:#051c28;--v:#0e7490;--v2:#0891b2;--v3:#22d3ee;--v4:#67e8f9;--pink:#8b5cf6;--cyan:#a78bfa;--border:rgba(8,145,178,.07);--border2:rgba(8,145,178,.18)}
+body.theme-oxide{--bg:#0a0602;--bg2:#0f0a03;--bg3:#1a1004;--v:#b45309;--v2:#d97706;--v3:#fbbf24;--v4:#fde68a;--pink:#f87171;--cyan:#fb923c;--border:rgba(217,119,6,.07);--border2:rgba(217,119,6,.18)}
+body.theme-ghost{--bg:#030303;--bg2:#080808;--bg3:#0f0f0f;--v:#3f3f46;--v2:#52525b;--v3:#a1a1aa;--v4:#d4d4d8;--pink:#e4e4e7;--cyan:#71717a;--border:rgba(82,82,91,.07);--border2:rgba(82,82,91,.25)}
+body.crt-mode{filter:brightness(1.1) contrast(1.05);--v:#00ff41;--v2:#00cc33;--v3:#33ff66;--v4:#66ff99;--pink:#00ff41;--cyan:#00cc33;--bg:#000a00;--bg2:#000d00;--bg3:#001200}
+body.crt-mode::before{content:'';position:fixed;inset:0;z-index:99998;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,255,0,.03) 3px,rgba(0,255,0,.03) 4px);animation:crtF 8s linear infinite}
+body.crt-mode::after{content:'CRT MODE';position:fixed;top:1rem;right:1rem;z-index:99998;font-family:var(--mono);font-size:10px;color:rgba(0,255,0,.5);pointer-events:none;animation:crtB .5s step-end infinite}
+@keyframes crtF{0%,100%{opacity:1}93%{opacity:.85}97%{opacity:.9}}
+@keyframes crtB{0%,100%{opacity:.5}50%{opacity:0}}
+#kpanic{position:fixed;inset:0;z-index:99997;background:#0000aa;display:none;align-items:center;justify-content:center;flex-direction:column;font-family:var(--mono);color:#fff;padding:3rem;cursor:default;text-align:center}
+#kpanic.show{display:flex;animation:panicIn .1s step-end}
+@keyframes panicIn{from{opacity:0}to{opacity:1}}
+.kp-title{font-size:clamp(1.2rem,3vw,2rem);font-weight:700;margin-bottom:2rem}
+.kp-emoji{font-size:3.5rem;margin-bottom:1rem}
+.kp-body{font-size:11px;line-height:1.9;max-width:580px;opacity:.9;text-align:left}
+.kp-bar{margin-top:2rem;font-size:12px}
+.kp-bar-fill{display:inline-block;background:#fff;height:1em;animation:kpFill 3s linear forwards}
+@keyframes kpFill{from{width:0}to{width:200px}}
+#matrix-ov{position:fixed;inset:0;z-index:99996;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;flex-direction:column}
+#matrix-ov.show{display:flex}
+#matrix-cv{position:absolute;inset:0}
+.matrix-msg{position:relative;z-index:1;font-family:var(--mono);text-align:center;animation:mmIn 1s ease 2s both;opacity:0}
+.matrix-msg h2{font-size:clamp(1.5rem,4vw,3rem);color:#00ff41;text-shadow:0 0 20px #00ff41;margin-bottom:.5rem}
+.matrix-msg p{font-size:14px;color:rgba(0,255,65,.7)}
+@keyframes mmIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:7rem 3rem 5rem;max-width:1020px;margin:0 auto;position:relative;z-index:3}
+.status-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.18);border-radius:20px;padding:5px 14px;font-size:11px;color:var(--green);font-family:var(--mono);margin-bottom:2.2rem;width:fit-content;opacity:0;animation:fuP .8s ease .4s forwards}
+.s-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:sdot 2s ease infinite}
+@keyframes sdot{0%,100%{transform:scale(1)}50%{transform:scale(1.5);box-shadow:0 0 14px var(--green)}}
+.eyebrow{font-family:var(--mono);font-size:12px;color:var(--v3);letter-spacing:.12em;margin-bottom:1.2rem;opacity:0;animation:fuP .8s ease .5s forwards;display:flex;align-items:center;gap:10px}
+.eyebrow::before{content:'';width:22px;height:1px;background:var(--v3)}
+.hero-h1{font-family:var(--display);font-size:clamp(3.8rem,7.5vw,7rem);font-weight:800;line-height:.98;letter-spacing:-.035em;margin-bottom:1.6rem}
+.hl1{display:block;opacity:0;animation:slR .9s cubic-bezier(.16,1,.3,1) .6s forwards}
+.hl2{display:block;opacity:0;background:linear-gradient(135deg,var(--v4) 0%,var(--pink) 45%,var(--cyan) 90%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:300% auto;animation:gFlow 5s linear infinite,slR .9s cubic-bezier(.16,1,.3,1) .75s forwards}
+.hl3{display:block;color:var(--muted2);font-weight:300;opacity:0;animation:slR .9s cubic-bezier(.16,1,.3,1) .9s forwards}
+@keyframes gFlow{0%{background-position:0%}100%{background-position:300%}}
+@keyframes slR{from{opacity:0;transform:translateX(-40px) skewX(-4deg)}to{opacity:1;transform:none}}
+.hero-sub{font-size:1.1rem;color:var(--muted2);max-width:540px;line-height:1.75;margin-bottom:2.8rem;opacity:0;animation:fuP .8s ease 1.05s forwards}
+.hero-sub b{color:var(--v4);font-weight:500}
+.hero-btns{display:flex;gap:1rem;flex-wrap:wrap;opacity:0;animation:fuP .8s ease 1.2s forwards}
+.btn{padding:.85rem 2rem;border-radius:10px;font-family:var(--font);font-size:14px;font-weight:600;cursor:none;text-decoration:none;transition:all .25s;display:inline-flex;align-items:center;gap:8px;position:relative;overflow:hidden}
+.btn-v{background:var(--v2);color:#fff;border:none}
+.btn-v::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--v3),var(--pink));opacity:0;transition:opacity .3s}
+.btn-v:hover::before{opacity:1}
+.btn-v:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(139,92,246,.4)}
+.btn-v span{position:relative;z-index:1}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--v3);color:var(--v4);transform:translateY(-2px)}
+.stat-row{display:flex;gap:1rem;margin-top:3.5rem;flex-wrap:wrap;opacity:0;animation:fuP .8s ease 1.3s forwards}
+.stat-chip{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:.75rem 1.1rem;transition:all .3s;position:relative;overflow:hidden;cursor:default}
+.stat-chip::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(139,92,246,.06),transparent);opacity:0;transition:opacity .3s}
+.stat-chip:hover::before{opacity:1}
+.stat-chip:hover{border-color:var(--border2);transform:translateY(-2px)}
+.sv{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--text);line-height:1}
+.sl{font-family:var(--mono);font-size:10px;color:var(--muted2);margin-top:4px;letter-spacing:.06em}
+.scroll-hint{position:absolute;bottom:2.5rem;left:3rem;display:flex;align-items:center;gap:10px;color:var(--muted);font-family:var(--mono);font-size:10px;letter-spacing:.12em;opacity:0;animation:fuP .8s ease 1.5s forwards}
+.scroll-ln{width:40px;height:1px;background:var(--muted);position:relative;overflow:hidden}
+.scroll-ln::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:var(--v3);animation:scan 2s ease-in-out infinite}
+@keyframes scan{0%{left:-100%}100%{left:100%}}
+@keyframes fuP{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.mq-wrap{position:relative;z-index:3;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:.85rem 0;overflow:hidden;background:var(--bg2)}
+.mq-track{display:flex;white-space:nowrap;animation:mq 28s linear infinite}
+.mq-track:hover{animation-play-state:paused}
+.mq-item{padding:0 2.2rem;font-family:var(--mono);font-size:11px;color:var(--muted2);letter-spacing:.08em;display:flex;align-items:center;gap:.8rem;transition:color .2s;cursor:default}
+.mq-item:hover{color:var(--v4)}
+.mq-item::after{content:'✦';color:var(--v);opacity:.4;font-size:9px}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+section{padding:8rem 3rem;max-width:1020px;margin:0 auto;position:relative;z-index:3}
+.s-tag{font-family:var(--mono);font-size:11px;color:var(--v3);letter-spacing:.15em;text-transform:uppercase;margin-bottom:.6rem}
+.s-h2{font-family:var(--display);font-size:clamp(2rem,4vw,3.2rem);font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem;line-height:1.1}
+.s-sub{color:var(--muted2);margin-bottom:3.5rem;font-size:15px}
+.rev{opacity:0;transform:translateY(36px);transition:opacity .75s ease,transform .75s ease}
+.rev.on{opacity:1;transform:none}
+.rev.d1{transition-delay:.1s}.rev.d2{transition-delay:.2s}.rev.d3{transition-delay:.3s}.rev.d4{transition-delay:.4s}
+.gd{height:1px;background:linear-gradient(90deg,transparent,rgba(139,92,246,.15),transparent);margin:0 3rem;position:relative;z-index:3}
+.bento{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:18px;overflow:hidden}
+.b-card{background:var(--bg2);padding:1.75rem;position:relative;overflow:hidden;transition:background .3s}
+.b-card:hover{background:var(--bg3)}
+.b-card.s2{grid-column:span 2}.b-card.s3{grid-column:span 3}
+.b-card::before{content:'';position:absolute;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.12),transparent 70%);left:var(--mx,50%);top:var(--my,50%);transform:translate(-50%,-50%);opacity:0;transition:opacity .4s;pointer-events:none}
+.b-card:hover::before{opacity:1}
+.b-line{position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--v),var(--pink),var(--cyan));transform:scaleX(0);transform-origin:left;transition:transform .5s ease}
+.b-card:hover .b-line{transform:scaleX(1)}
+.b-ico{font-size:26px;margin-bottom:.9rem;display:block}
+.b-card h3{font-size:15px;font-weight:600;margin-bottom:.4rem}
+.b-card p{font-size:13px;color:var(--muted2);line-height:1.5;margin-bottom:.9rem}
+.tags{display:flex;flex-wrap:wrap;gap:5px}
+.tag{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:5px;border:1px solid;transition:all .2s;cursor:default}
+.tag:hover{transform:translateY(-2px) scale(1.05)}
+.tv{background:rgba(139,92,246,.08);color:var(--v4);border-color:rgba(139,92,246,.15)}
+.tg{background:rgba(16,185,129,.06);color:#6ee7b7;border-color:rgba(16,185,129,.15)}
+.tp{background:rgba(236,72,153,.06);color:#f9a8d4;border-color:rgba(236,72,153,.15)}
+.ta{background:rgba(245,158,11,.06);color:#fcd34d;border-color:rgba(245,158,11,.15)}
+.tc{background:rgba(6,182,212,.06);color:#67e8f9;border-color:rgba(6,182,212,.15)}
+.vtog{display:flex;gap:.5rem;margin-bottom:2rem}
+.vt-btn{font-family:var(--mono);font-size:11px;padding:5px 14px;border-radius:6px;border:1px solid var(--border2);color:var(--muted2);background:transparent;cursor:none;transition:all .2s}
+.vt-btn.active{background:rgba(139,92,246,.12);border-color:var(--v3);color:var(--v4)}
+#sg-wrap{display:none}
+#sg-wrap.show{display:block}
+#sg-canvas{width:100%;border-radius:18px;border:1px solid var(--border);background:var(--bg2);display:block}
+.pf-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:2rem}
+.pf-btn{font-family:var(--mono);font-size:11px;padding:5px 14px;border-radius:20px;border:1px solid var(--border2);color:var(--muted2);background:transparent;cursor:none;transition:all .2s}
+.pf-btn.active{background:rgba(139,92,246,.12);border-color:var(--v3);color:var(--v4)}
+.pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem}
+.pc{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.75rem;transition:all .35s;position:relative;overflow:hidden;cursor:default}
+.pc[data-id]:not(.ghost){cursor:none}
+.pc:hover{border-color:rgba(139,92,246,.25);box-shadow:0 28px 70px rgba(0,0,0,.6),0 0 0 1px rgba(139,92,246,.08),inset 0 1px 0 rgba(255,255,255,.04)}
+.pshim{position:absolute;top:-120%;left:-60%;width:40%;height:320%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.04),transparent);transform:skewX(-20deg);transition:top .7s ease}
+.pc:hover .pshim{top:120%}
+.pglow{position:absolute;top:-80px;right:-80px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.1),transparent 70%);opacity:0;transition:opacity .4s;pointer-events:none}
+.pc:hover .pglow{opacity:1}
+.pnum{font-family:var(--mono);font-size:10px;color:var(--v3);margin-bottom:.9rem;display:flex;align-items:center;gap:8px}
+.pnum::after{content:'';flex:1;height:1px;background:var(--border2)}
+.pc h3{font-size:18px;font-weight:700;margin-bottom:.5rem;letter-spacing:-.01em}
+.pc>p{font-size:13px;color:var(--muted2);line-height:1.65;margin-bottom:1.1rem}
+.pfoot{display:flex;align-items:center;justify-content:space-between}
+.parr{width:32px;height:32px;border-radius:8px;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;color:var(--muted2);font-size:13px;transition:all .2s}
+.pc:hover .parr{border-color:var(--v3);color:var(--v3);background:rgba(139,92,246,.08);transform:rotate(45deg)}
+.pc.ghost{border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:220px;text-align:center}
+.pc.ghost:hover{transform:none;box-shadow:none;border-color:var(--border)}
+.gplus{font-size:1.8rem;color:var(--muted);margin-bottom:.5rem;opacity:.25}
+#pm-ov{position:fixed;inset:0;z-index:8000;background:rgba(3,3,10,.88);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;padding:2rem;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s}
+#pm-ov.open{opacity:1;visibility:visible}
+#pm{width:min(800px,100%);max-height:90vh;overflow-y:auto;background:var(--bg2);border:1px solid rgba(139,92,246,.22);border-radius:20px;box-shadow:0 40px 100px rgba(0,0,0,.8);transform:scale(.94) translateY(20px);transition:transform .35s cubic-bezier(.16,1,.3,1);scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+#pm::-webkit-scrollbar{width:4px}
+#pm::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+#pm-ov.open #pm{transform:scale(1) translateY(0)}
+.pm-head{padding:1.75rem 1.75rem 0;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
+.pm-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted2);font-size:16px;cursor:none;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.pm-close:hover{border-color:var(--pink);color:var(--pink)}
+.pm-body{padding:1.5rem 1.75rem 2.5rem}
+.pm-meta{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.25rem}
+.pm-badge{font-family:var(--mono);font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);color:var(--v4)}
+.pm-desc{font-size:14px;color:var(--muted2);line-height:1.8;margin-bottom:1.75rem}
+.pm-st{font-family:var(--mono);font-size:11px;color:var(--v3);letter-spacing:.1em;text-transform:uppercase;margin:1.5rem 0 .75rem}
+.pm-arch{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1.25rem;margin-bottom:.5rem;font-family:var(--mono);font-size:12px;color:var(--muted2);line-height:1.9;white-space:pre-wrap}
+.pm-arch .hi{color:var(--v3)}
+.pm-bars{display:flex;flex-direction:column;gap:.75rem;margin-bottom:.5rem}
+.pm-bar-item{display:flex;flex-direction:column;gap:5px}
+.pm-bar-lbl{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted2)}
+.pm-bar-track{height:3px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden}
+.pm-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--v),var(--v3));width:0;transition:width 1.1s cubic-bezier(.16,1,.3,1)}
+.pm-hls{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem}
+.pm-hl{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1rem;font-size:13px;color:var(--muted2);line-height:1.55}
+.pm-hl strong{display:block;color:var(--v4);font-size:11px;font-family:var(--mono);margin-bottom:4px;letter-spacing:.04em}
+#topo-wrap{position:relative;border-radius:18px;border:1px solid var(--border);background:var(--bg2);overflow:hidden}
+#topo-svg{width:100%;display:block;min-height:320px}
+.topo-node{cursor:default}
+.topo-node:hover rect{stroke-width:2.5}
+.topo-lbl{font-family:var(--mono);font-size:11px;font-weight:600;pointer-events:none}
+.topo-sub{font-family:var(--mono);font-size:9px;fill:#8080aa;pointer-events:none}
+.topo-el{font-family:var(--mono);font-size:9px;fill:rgba(139,92,246,.4);pointer-events:none}
+.topo-tip{position:absolute;background:rgba(10,10,20,.97);border:1px solid rgba(139,92,246,.25);border-radius:8px;padding:.65rem 1rem;font-family:var(--mono);font-size:11px;color:var(--text);pointer-events:none;opacity:0;transition:opacity .2s;z-index:10;max-width:230px;line-height:1.65}
+#term-wrap{position:fixed;bottom:1.5rem;right:1.5rem;z-index:8500;display:flex;flex-direction:column;align-items:flex-end;gap:.5rem}
+#term-fab{width:44px;height:44px;border-radius:12px;background:rgba(10,10,20,.93);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:none;transition:all .25s;font-size:18px;color:var(--v3)}
+#term-fab:hover{border-color:var(--v3);transform:scale(1.06);background:rgba(139,92,246,.12)}
+#term-win{width:min(520px,calc(100vw - 3rem));background:rgba(5,5,13,.98);border:1px solid rgba(139,92,246,.22);border-radius:14px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.75);display:none;flex-direction:column;position:relative}
+#term-win.open{display:flex;animation:tOpen .3s cubic-bezier(.16,1,.3,1)}
+#term-win::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);border-radius:14px;z-index:0}
+@keyframes tOpen{from{opacity:0;transform:scale(.9) translateY(10px)}to{opacity:1;transform:none}}
+.t-bar{display:flex;align-items:center;gap:8px;padding:.65rem 1rem;border-bottom:1px solid rgba(139,92,246,.1);background:rgba(0,0,0,.25);position:relative;z-index:1}
+.t-dots{display:flex;gap:5px}
+.t-dot{width:10px;height:10px;border-radius:50%;cursor:none}
+.t-dot.cl{background:#ff5f57}.t-dot.mn{background:#febc2e}.t-dot.mx{background:#28c840}
+.t-title{flex:1;font-family:var(--mono);font-size:11px;color:var(--muted2);text-align:center;letter-spacing:.06em}
+.t-body{height:280px;overflow-y:auto;padding:.75rem 1rem;font-family:var(--mono);font-size:12px;line-height:1.7;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;position:relative;z-index:1}
+.t-body::-webkit-scrollbar{width:3px}
+.t-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.t-line{margin-bottom:2px;word-break:break-word}
+.tp2{color:var(--v3)}.tc2{color:var(--text)}.to2{color:var(--muted2)}.te2{color:var(--pink)}.tok2{color:var(--green)}.ti2{color:var(--cyan)}.ts2{color:var(--amber)}
+.t-inp-row{display:flex;align-items:center;gap:8px;padding:.6rem 1rem;border-top:1px solid rgba(139,92,246,.1);position:relative;z-index:1}
+.t-ps{font-family:var(--mono);font-size:12px;color:var(--v3);white-space:nowrap;flex-shrink:0}
+#t-inp{flex:1;background:none;border:none;outline:none;font-family:var(--mono);font-size:12px;color:var(--text);caret-color:var(--v3)}
+.labs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+.lab-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:all .3s}
+.lab-card:hover{border-color:rgba(139,92,246,.25);transform:translateY(-3px);box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.lab-cv-wrap{position:relative;height:160px;overflow:hidden}
+.lab-cv-wrap canvas{width:100%;height:100%;display:block}
+.lab-stat{position:absolute;top:.6rem;right:.6rem;font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:10px;letter-spacing:.06em}
+.lab-stat.run{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:var(--green)}
+.lab-stat.pau{background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);color:var(--v4)}
+.lab-info{padding:1.1rem}
+.lab-info h3{font-size:14px;font-weight:700;margin-bottom:3px}
+.lab-info p{font-size:12px;color:var(--muted2);margin-bottom:.75rem}
+.lab-ctrls{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.lab-btn{font-family:var(--mono);font-size:10px;padding:3px 10px;border-radius:5px;border:1px solid var(--border2);background:transparent;color:var(--muted2);cursor:none;transition:all .2s}
+.lab-btn:hover{border-color:var(--v3);color:var(--v4)}
+.lab-sl{-webkit-appearance:none;appearance:none;height:2px;background:var(--border2);border-radius:1px;outline:none;flex:1;min-width:60px;cursor:none}
+.lab-sl::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--v3);cursor:none}
+.exp-tl{position:relative;padding-left:2.2rem}
+.exp-tl::before{content:'';position:absolute;left:0;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,transparent,var(--v2) 20%,var(--pink) 80%,transparent)}
+.exp-item{position:relative;padding:2rem 0 2rem 2rem;border-bottom:1px solid var(--border)}
+.exp-item:last-child{border-bottom:none}
+.exp-dot{position:absolute;left:-2.55rem;top:2.4rem;width:10px;height:10px;border-radius:50%;background:var(--v2);box-shadow:0 0 0 3px rgba(139,92,246,.12),0 0 14px rgba(139,92,246,.5)}
+.exp-time{font-family:var(--mono);font-size:11px;color:var(--muted2);margin-bottom:.4rem;letter-spacing:.08em}
+.exp-role{font-size:18px;font-weight:700;margin-bottom:2px;letter-spacing:-.01em}
+.exp-co{font-size:14px;color:var(--v3);margin-bottom:.6rem}
+.exp-desc{font-size:14px;color:var(--muted2);line-height:1.65}
+.soon-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.15);border-radius:12px;padding:3px 10px;font-size:10px;color:var(--green);font-family:var(--mono);margin-left:10px;vertical-align:middle}
+.ct-wrap{text-align:center;padding:4.5rem 2.5rem;background:var(--bg2);border:1px solid var(--border);border-radius:22px;position:relative;overflow:hidden}
+.ct-glow{position:absolute;top:-60%;left:50%;transform:translateX(-50%);width:700px;height:400px;border-radius:50%;background:radial-gradient(ellipse,rgba(139,92,246,.07),transparent 70%);pointer-events:none}
+.ct-wrap h2{font-family:var(--display);font-size:clamp(2rem,4vw,3rem);font-weight:800;letter-spacing:-.025em;margin-bottom:.75rem;position:relative}
+.ct-wrap>p{color:var(--muted2);margin-bottom:2.5rem;position:relative}
+.c-links{display:flex;justify-content:center;gap:.75rem;flex-wrap:wrap;position:relative}
+.c-link{display:flex;align-items:center;gap:8px;padding:.65rem 1.4rem;border:1px solid var(--border2);border-radius:10px;color:var(--text);text-decoration:none;font-size:12px;font-weight:500;transition:all .25s;font-family:var(--mono)}
+.c-link:hover{border-color:var(--v3);color:var(--v4);transform:translateY(-2px);box-shadow:0 8px 24px rgba(139,92,246,.18)}
+footer{text-align:center;padding:2.5rem;border-top:1px solid var(--border);color:var(--muted);font-size:11px;font-family:var(--mono);letter-spacing:.08em;position:relative;z-index:3}
+.fhint{color:var(--v3);opacity:.5;margin-left:.5rem}
+.glitch{position:relative}
+.glitch::before,.glitch::after{content:attr(data-text);position:absolute;top:0;left:0;width:100%;pointer-events:none;opacity:0}
+.glitch:hover::before{opacity:.6;color:var(--pink);animation:g1 .4s step-end infinite;clip-path:polygon(0 15%,100% 15%,100% 40%,0 40%)}
+.glitch:hover::after{opacity:.6;color:var(--cyan);animation:g2 .4s step-end .05s infinite;clip-path:polygon(0 60%,100% 60%,100% 80%,0 80%)}
+@keyframes g1{0%,100%{transform:translate(0)}25%{transform:translate(-3px,1px)}50%{transform:translate(3px,-1px)}75%{transform:translate(-2px)}}
+@keyframes g2{0%,100%{transform:translate(0)}25%{transform:translate(3px,-1px)}50%{transform:translate(-3px,1px)}75%{transform:translate(2px)}}
+.mag{transition:transform .3s cubic-bezier(.23,1,.32,1)}
+:focus-visible{outline:2px solid var(--v3);outline-offset:3px;border-radius:4px}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+@media(max-width:700px){
+  body{cursor:auto}
+  #cur,#cur-ring,#cur-trail{display:none}
+  .bento{grid-template-columns:repeat(2,1fr)}
+  .b-card.s3{grid-column:span 2}
+  section{padding:5rem 1.5rem}
+  .hero{padding:6rem 1.5rem 4rem}
+  nav{top:10px;padding:.55rem 1rem;gap:1rem}
+  .nav-links{display:none}
+  .nav-links.mob-open{display:flex;position:fixed;top:58px;left:1rem;right:1rem;background:rgba(8,8,15,.97);backdrop-filter:blur(20px);border:1px solid var(--border2);border-radius:12px;padding:1rem;flex-direction:column;gap:.75rem;z-index:99}
+  .nav-mob{display:flex}
+  .nav-cmd{display:none}
+  #term-win{width:calc(100vw - 2rem)}
+  .t-body{height:220px}
+  .cmd-shortcut{display:none}
+  #pm-ov{align-items:flex-end;padding:0}
+  #pm{width:100%;border-radius:16px 16px 0 0;max-height:92vh}
+  .pm-hls{grid-template-columns:1fr}
+  #topo-svg{min-height:260px}
+  .labs-grid{grid-template-columns:1fr}
+  .scroll-hint{display:none}
+}
+</style>
+</head><body>
+<div id="cur"></div><div id="cur-ring"></div><div id="cur-trail"></div>
+<div class="noise"></div><div class="grid-bg"></div>
+<canvas id="bg-canvas"></canvas><canvas id="particle-canvas"></canvas>
+<div id="kpanic"><div class="kp-emoji">💀</div><div class="kp-title">KERNEL PANIC — not syncing:<br>Attempted to kill init!</div><div class="kp-body">CPU: 0 PID: 1337 Comm: portfolio.service Not tainted 6.8.0-basava<br>Hardware name: Basava Dev Machine / Embedded Rig<br>Call Trace:<br>&nbsp;&nbsp;[&lt;ffffffff81a2b3c4&gt;] panic+0x1a4/0x3d0<br>&nbsp;&nbsp;[&lt;ffffffff8109f2e0&gt;] do_exit+0xa60/0xb80<br>&nbsp;&nbsp;[&lt;ffffffff8109f490&gt;] do_group_exit+0x50/0xd0<br><br>Kernel offset: 0x2400000 from 0xffffffff81000000<br>---[ end Kernel panic ]---</div><div class="kp-bar">Collecting crash data: <span class="kp-bar-fill">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> rebooting...</div></div>
+<div id="matrix-ov"><canvas id="matrix-cv"></canvas><div class="matrix-msg"><h2>HIRING DECISION: APPROVED</h2><p>press any key to exit the matrix</p></div></div>
+<div id="loader"><div class="boot-wrap"><div class="boot-head"><div class="boot-logo">B/</div><div><div class="boot-sysname">BASAVA OS v1.0.0</div><div class="boot-syssub">embedded-x86_64 · kernel 6.8.0-basava · SMP PREEMPT_RT</div></div></div><div class="boot-log" id="boot-log"></div><div class="boot-prog-wrap"><div class="boot-prog-lbl"><span id="boot-st">initializing...</span><span id="boot-pct">0%</span></div><div class="boot-prog-bar"><div class="boot-prog-fill" id="boot-fill"></div></div></div><div class="boot-skip">press any key to skip <span>ESC / SPACE</span></div></div></div>
+<nav><div class="nav-logo" id="nav-logo">basava.dev</div><ul class="nav-links" id="nav-links"><li><a href="#skills" title="Astra Arsenal - Technology Stack">astra</a></li><li><a href="#projects" title="Yantras - Engineering Projects">yantras</a></li><li><a href="#labs" title="Engineering Laboratory">prayog</a></li><li><a href="#hardware" title="System Architecture">yantra</a></li><li><a href="#experience" title="Sadhana - Current Focus">sadhana</a></li><li><a href="#contact">connect</a></li></ul><button class="nav-cmd" id="nav-cmd-btn">⌘K</button><button class="nav-mob" id="nav-mob-btn"><span></span><span></span><span></span></button></nav><div id="cmd-overlay"><div id="cmd-palette"><div class="cmd-inp-wrap"><span class="cmd-ico">⌘</span><input id="cmd-input" type="text" placeholder="type a command or search..." autocomplete="off" spellcheck="false"><span class="cmd-esc-key">ESC</span></div><div class="cmd-results" id="cmd-results"></div><div class="cmd-foot"><span><kbd>↑</kbd><kbd>↓</kbd> navigate</span><span><kbd>↵</kbd> run</span><span><kbd>ESC</kbd> close</span></div></div></div>
+<div id="theme-toast"><span class="toast-dot"></span><span id="toast-txt">theme: void</span></div>
+<div class="hero">
+  <div class="status-pill"><span class="s-dot"></span>linux · qt · hardware validation</div>
+  <div class="eyebrow">embedded engineer / builder</div>
+  <h1 class="hero-h1"><span class="hl1">i make things</span><span class="hl2 glitch" data-text="actually work.">actually work.</span><span class="hl3">close to the metal.</span></h1>
+  <p class="hero-sub">Embedded Systems Engineer focused on <b>Linux</b>, <b>Qt Application Development</b>, <b>Hardware Validation</b>, <b>GPU Computing</b>, and <b>Computer Vision</b>. Building reliable software for embedded platforms, system integration, automation, and real-world engineering workflows.</p>  <div class="hero-btns"><a href="#projects" class="btn btn-v mag"><span>see my work</span><span>↗</span></a><a href="#contact" class="btn btn-ghost mag">let's talk</a></div>
+  <div class="stat-row">
+    <div class="stat-chip"><div class="sv" data-count="3">0</div><div class="sl">yrs exp</div></div>
+    <div class="stat-chip"><div class="sv" data-count="15">0</div><div class="sl">tools shipped</div></div>
+    <div class="stat-chip"><div class="sv" data-count="20">0</div><div class="sl">integrations</div></div>
+    <div class="stat-chip" id="coffee-chip"><div class="sv" id="coffee-sv">1000+</div><div class="sl">debug hours</div></div>
+  </div>
+  <div class="scroll-hint"><span class="scroll-ln"></span>scroll</div>
+</div>
+<div class="mq-wrap"><div class="mq-track"><span class="mq-item">Linux Kernel</span><span class="mq-item">Qt6 / PySide6</span><span class="mq-item">CUDA</span><span class="mq-item">TensorRT</span><span class="mq-item">PCIe</span><span class="mq-item">Ethernet</span><span class="mq-item">Yocto BSP</span><span class="mq-item">MIL-STD-1553</span><span class="mq-item">RTOS / VxWorks</span><span class="mq-item">OpenCV</span><span class="mq-item">RHEL</span><span class="mq-item">Python</span><span class="mq-item">C / C++</span><span class="mq-item">FPGA · Vivado</span><span class="mq-item">Linux Kernel</span><span class="mq-item">Qt6 / PySide6</span><span class="mq-item">CUDA</span><span class="mq-item">TensorRT</span><span class="mq-item">PCIe</span><span class="mq-item">Ethernet</span><span class="mq-item">Yocto BSP</span><span class="mq-item">MIL-STD-1553</span><span class="mq-item">RTOS / VxWorks</span><span class="mq-item">OpenCV</span><span class="mq-item">RHEL</span><span class="mq-item">Python</span><span class="mq-item">C / C++</span><span class="mq-item">FPGA · Vivado</span></div></div>
+<section id="skills">
+  <div class="s-tag rev">// astra arsenal</div>
+  <h2 class="s-h2 rev d1" title="Technology Stack & Tools">Astra Arsenal</h2>
+  <p class="s-sub rev d2">Engineering-focused technology stack and tools.</p>
+  <div class="vtog rev d2"><button class="vt-btn active" id="vt-grid">grid view</button><button class="vt-btn" id="vt-graph">skill graph</button></div>
+  <div id="bento-wrap" class="rev d3"><div class="bento">
+    <div class="b-card s3"><span class="b-ico">🖥️</span><h3>Operating Systems</h3><p>Linux, Ubuntu, RHEL, Yocto, VxWorks — from embedded to real-time.</p><div class="tags"><span class="tag tv">Linux</span><span class="tag tv">Ubuntu</span><span class="tag tv">RHEL</span><span class="tag tv">Yocto</span><span class="tag tv">VxWorks</span></div><div class="b-line"></div></div>
+    <div class="b-card s3"><span class="b-ico">⚙️</span><h3>Programming</h3><p>C, C++, Python, Bash, JavaScript — systems to scripting.</p><div class="tags"><span class="tag tg">C</span><span class="tag tg">C++</span><span class="tag tg">Python</span><span class="tag tg">Bash</span><span class="tag tg">JavaScript</span></div><div class="b-line"></div></div>
+    <div class="b-card s3"><span class="b-ico">🔧</span><h3>Frameworks & Libraries</h3><p>Qt6, OpenCV, TensorRT, CUDA — GUI, vision, acceleration.</p><div class="tags"><span class="tag tp">Qt6</span><span class="tag ta">OpenCV</span><span class="tag tp">TensorRT</span><span class="tag tp">CUDA</span></div><div class="b-line"></div></div>
+    <div class="b-card s3"><span class="b-ico">🔌</span><h3>Interfaces & Protocols</h3><p>PCIe, Ethernet, UART, SPI, I2C, GPIO, USB, SATA.</p><div class="tags"><span class="tag tv">PCIe</span><span class="tag tv">Ethernet</span><span class="tag tv">UART</span><span class="tag tv">SPI/I2C</span><span class="tag tv">GPIO</span><span class="tag tv">USB</span><span class="tag tv">SATA</span></div><div class="b-line"></div></div>
+  </div></div>
+  <div id="sg-wrap"><canvas id="sg-canvas"></canvas><p style="text-align:center;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:.75rem">drag nodes · hover to highlight</p></div>
+</section>
+<div class="gd"></div>
+<section id="projects">
+  <div class="s-tag rev">// yantras</div>
+  <h2 class="s-h2 rev d1" title="Engineering Projects">Yantras</h2>
+  <p class="s-sub rev d2">Real-world engineering systems focused on embedded Linux, automation, validation, GPU computing, and computer vision.</p>
+  <div class="pf-row rev d2"><button class="pf-btn active" data-filter="all">all</button><button class="pf-btn" data-filter="linux">linux</button><button class="pf-btn" data-filter="qt">qt</button><button class="pf-btn" data-filter="c++">c++</button><button class="pf-btn" data-filter="cuda">cuda</button><button class="pf-btn" data-filter="opencv">vision</button></div>
+  <div class="pg" id="pg">
+    <div class="pc rev d1 tilt-card" data-id="hwval" data-tags="linux,qt,c++,automation" tabindex="0"><div class="pshim"></div><div class="pglow"></div><div class="pnum">01 · linux / qt</div><h3>Embedded Hardware Validation Framework</h3><p>Unified validation framework designed to test and verify hardware interfaces through a GUI-driven workflow.</p><div class="pfoot"><div class="tags"><span class="tag tp">Qt6</span><span class="tag tg">C++</span><span class="tag tv">Linux</span></div><div class="parr">↗</div></div></div>
+    <div class="pc rev d2 tilt-card" data-id="distro" data-tags="linux,yocto" tabindex="0"><div class="pshim"></div><div class="pglow"></div><div class="pnum">02 · yocto / linux</div><h3>Yocto BSP Build Environment</h3><p>Development and customization of Linux distributions including package integration, image generation, and deployment workflows.</p><div class="pfoot"><div class="tags"><span class="tag tv">Yocto</span><span class="tag tv">QEMU</span><span class="tag tv">BSP</span></div><div class="parr">↗</div></div></div>
+    <div class="pc rev d3 tilt-card" data-id="fft" data-tags="cuda,c++,signal" tabindex="0"><div class="pshim"></div><div class="pglow"></div><div class="pnum">03 · cuda / c++</div><h3>CUDA FFT Demonstrator</h3><p>High-performance FFT processing engine leveraging GPU acceleration for mathematical and signal analysis workloads.</p><div class="pfoot"><div class="tags"><span class="tag tp">CUDA</span><span class="tag tg">C++</span><span class="tag tc">Signal Proc</span></div><div class="parr">↗</div></div></div>
+    <div class="pc rev d1 tilt-card" data-id="visionpipe" data-tags="opencv,cuda,tensorrt" tabindex="0"><div class="pshim"></div><div class="pglow"></div><div class="pnum">04 · opencv / cuda</div><h3>Jetson Vision Pipeline</h3><p>Real-time computer vision pipeline featuring face detection, face recognition, and inference optimization.</p><div class="pfoot"><div class="tags"><span class="tag ta">OpenCV</span><span class="tag tp">TensorRT</span><span class="tag tp">CUDA</span></div><div class="parr">↗</div></div></div>
+    <div class="pc rev d2 tilt-card" data-id="sysrely" data-tags="linux,monitoring,automation" tabindex="0"><div class="pshim"></div><div class="pglow"></div><div class="pnum">05 · linux / monitoring</div><h3>Watchdog & System Reliability Validation</h3><p>System health verification platform focused on recovery validation, monitoring, logging, and long-duration stability testing.</p><div class="pfoot"><div class="tags"><span class="tag tv">Linux</span><span class="tag tg">Monitoring</span><span class="tag tc">Automation</span></div><div class="parr">↗</div></div></div>
+    <div class="pc rev d3 tilt-card" data-id="netval" data-tags="linux,networking" tabindex="0"><div class="pshim"></div><div class="pglow"></div><div class="pnum">06 · ethernet / linux</div><h3>Ethernet & UDP Validation Tool</h3><p>Toolkit for network interface validation, UDP communication testing, connectivity verification, and diagnostics.</p><div class="pfoot"><div class="tags"><span class="tag tv">Ethernet</span><span class="tag tv">UDP</span><span class="tag tv">Linux</span></div><div class="parr">↗</div></div></div>
+    <div class="pc rev d1 tilt-card" data-id="hwtest" data-tags="linux,c++,automation" tabindex="0"><div class="pshim"></div><div class="pglow"></div><div class="pnum">07 · linux / c/c++</div><h3>Hardware Interface Test Suite</h3><p>Validation suite for GPIO, Serial, Ethernet, USB, SATA, RTC, Audio, Display, and related hardware interfaces.</p><div class="pfoot"><div class="tags"><span class="tag tv">Linux</span><span class="tag tg">C/C++</span><span class="tag tc">Automation</span></div><div class="parr">↗</div></div></div>
+    <div class="pc rev d2 tilt-card" data-id="edgecv" data-tags="opencv,cuda,tensorrt" tabindex="0"><div class="pshim"></div><div class="pglow"></div><div class="pnum">08 · jetson / opencv</div><h3>Embedded AI Vision Platform</h3><p>Embedded AI platform focused on accelerated computer vision workloads and edge deployment optimization.</p><div class="pfoot"><div class="tags"><span class="tag ta">Jetson</span><span class="tag ta">OpenCV</span><span class="tag tp">TensorRT</span><span class="tag tp">CUDA</span></div><div class="parr">↗</div></div></div>
+  </div>
+</section>
+<div id="pm-ov"><div id="pm"><div class="pm-head"><div><h2 id="pm-title" style="font-family:var(--display);font-size:1.6rem;font-weight:800;letter-spacing:-.02em"></h2><div class="pm-meta" id="pm-meta"></div></div><button class="pm-close" id="pm-close">✕</button></div><div class="pm-body"><p class="pm-desc" id="pm-desc"></p><div class="pm-st">architecture</div><div class="pm-arch" id="pm-arch"></div><div class="pm-st">tech breakdown</div><div class="pm-bars" id="pm-bars"></div><div class="pm-st">key highlights</div><div class="pm-hls" id="pm-hls"></div></div></div></div>
+<div class="gd"></div>
+<section id="hardware">
+  <div class="s-tag rev">// yantra - architecture</div>
+  <h2 class="s-h2 rev d1" title="System Architecture">Yantra - Architecture</h2>
+  <p class="s-sub rev d2">System architecture and connectivity.</p>
+  <div id="topo-wrap" class="rev d3"><svg id="topo-svg" viewBox="0 0 840 340" xmlns="http://www.w3.org/2000/svg"></svg><div class="topo-tip" id="topo-tip"></div></div>
+</section>
+<div class="gd"></div>
+<section id="experience">
+  <div class="s-tag rev">// sadhana</div>
+  <h2 class="s-h2 rev d1" title="Current Focus & Continuous Learning">Sadhana</h2>
+  <p class="s-sub rev d2">Ongoing areas of engineering exploration, learning, and mastery.</p>
+  <div class="labs-grid">
+    <div class="lab-card rev d1">
+      <div class="lab-info">
+        <h3>BSP Development</h3>
+        <p>Board support package creation, bootloader integration, and kernel configuration for custom embedded platforms.</p>
+        <div class="lab-ctrls">
+          <span class="tag tv">Yocto</span><span class="tag tv">U-Boot</span><span class="tag tv">Linux</span>
+          <span class="soon-badge">Building</span>
+        </div>
+      </div>
+    </div>
+    <div class="lab-card rev d2">
+      <div class="lab-info">
+        <h3>Device Driver Development</h3>
+        <p>Character/block driver development, kernel module programming, and hardware abstraction for custom peripherals.</p>
+        <div class="lab-ctrls">
+          <span class="tag tv">Linux Kernel</span><span class="tag tv">C</span><span class="tag tv">Device Trees</span>
+          <span class="soon-badge">Exploring</span>
+        </div>
+      </div>
+    </div>
+    <div class="lab-card rev d3">
+      <div class="lab-info">
+        <h3>RTOS Concepts</h3>
+        <p>Real-time operating system principles: task scheduling, synchronization, memory management, and deterministic execution.</p>
+        <div class="lab-ctrls">
+          <span class="tag tv">FreeRTOS</span><span class="tag tv">VxWorks</span><span class="tag tv">Preemption</span>
+          <span class="soon-badge">Learning</span>
+        </div>
+      </div>
+    </div>
+    <div class="lab-card rev d1">
+      <div class="lab-info">
+        <h3>FPGA Workflows</h3>
+        <p>FPGA design flow, hardware description languages, and integration with embedded Linux systems via PCIe/XMC.</p>
+        <div class="lab-ctrls">
+          <span class="tag tp">Verilog</span><span class="tag tp">Vivado</span><span class="tag tp">Xilinx</span>
+          <span class="soon-badge">Researching</span>
+        </div>
+      </div>
+    </div>
+    <div class="lab-card rev d2">
+      <div class="lab-info">
+        <h3>Embedded Linux Architecture</h3>
+        <p>Deep dive into kernel internals, memory management, scheduling, and real-time preemption patches.</p>
+        <div class="lab-ctrls">
+          <span class="tag tv">PREEMPT_RT</span><span class="tag tv">Kernel Hacking</span><span class="tag tv">Debian</span>
+          <span class="soon-badge">Deep Dive</span>
+        </div>
+      </div>
+    </div>
+    <div class="lab-card rev d3">
+      <div class="lab-info">
+        <h3>Hardware Validation Automation</h3>
+        <p>Automated testing frameworks for hardware interface validation, stress testing, and regression analysis.</p>
+        <div class="lab-ctrls">
+          <span class="tag tc">Python</span><span class="tag tc">pytest</span><span class="tag tv">Linux</span>
+          <span class="soon-badge">Active</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="gd"></div>
+<section id="labs">
+  <div class="s-tag rev">// prayogshala</div>
+  <h2 class="s-h2 rev d1" title="Engineering Laboratory">Prayogshala</h2>
+  <p class="s-sub rev d2">Interactive engineering experiments.</p>
+  <div class="labs-grid">
+    <div class="lab-card rev d1"><div class="lab-cv-wrap"><canvas id="lab-sig" width="560" height="160"></canvas><div class="lab-stat pau" id="sig-st">PAUSED</div></div><div class="lab-info"><h3>Signal Visualizer</h3><p>Sine · Square · Sawtooth waveforms. Adjust frequency live.</p><div class="lab-ctrls"><button class="lab-btn" id="sig-play">▶ run</button><button class="lab-btn" id="sig-wave">sine</button><input type="range" class="lab-sl" id="sig-freq" min="1" max="10" value="3"></div></div></div>
+    <div class="lab-card rev d2"><div class="lab-cv-wrap"><canvas id="lab-gol" width="560" height="160"></canvas><div class="lab-stat run" id="gol-st">RUNNING</div></div><div class="lab-info"><h3>Conway's Game of Life</h3><p>Cellular automaton. Emergent complexity from simple rules.</p><div class="lab-ctrls"><button class="lab-btn" id="gol-play">⏸ pause</button><button class="lab-btn" id="gol-rand">randomize</button></div></div></div>
+    <div class="lab-card rev d3"><div class="lab-cv-wrap"><canvas id="lab-clk" width="560" height="160"></canvas><div class="lab-stat run">LIVE</div></div><div class="lab-info"><h3>Binary Clock</h3><p>Real-time clock in binary LED display. H · M · S.</p><div class="lab-ctrls"><button class="lab-btn" id="clk-fmt">24H</button><span style="font-family:var(--mono);font-size:11px;color:var(--muted2)">HH:MM:SS</span></div></div></div>
+    <div class="lab-card rev d1"><div class="lab-cv-wrap"><canvas id="lab-pwm" width="560" height="160"></canvas><div class="lab-stat run">LIVE</div></div><div class="lab-info"><h3>PWM Visualizer</h3><p>Pulse Width Modulation. Drag duty cycle, see waveform update.</p><div class="lab-ctrls"><input type="range" class="lab-sl" id="pwm-duty" min="5" max="95" value="50"><span style="font-family:var(--mono);font-size:11px;color:var(--v3)" id="pwm-lbl">50%</span></div></div></div>
+  </div>
+</section>
+<div class="gd"></div>
+<section id="contact">
+  <div class="ct-wrap rev"><div class="ct-glow"></div><div class="s-tag" style="margin-bottom:.75rem">// let's collab</div><h2>got a project?<br>let's build.</h2><p>open to freelance, consulting, cool side projects.<br>if it runs on linux, i'm in.</p>
+  <div class="c-links">
+    <a href="mailto:basavakiran200@gmail.com" class="c-link">📧 Email</a>
+    <a href="https://github.com/basavanidode" target="_blank" class="c-link">💻 GitHub</a>
+    <a href="https://www.linkedin.com/in/basavakiran9353974163" target="_blank" class="c-link">🔗 LinkedIn</a>
+  </div></div>
+</section>
+<footer>built with linux, caffeine, and too many kernel panics ☕<span class="fhint"> · ⌘K to explore · / to search</span></footer>
+<div id="term-wrap">
+  <div id="term-win"><div class="t-bar"><div class="t-dots"><div class="t-dot cl" id="t-close"></div><div class="t-dot mn"></div><div class="t-dot mx"></div></div><div class="t-title">basava@portfolio:~$</div></div><div class="t-body" id="t-body"></div><div class="t-inp-row"><span class="t-ps">basava@portfolio:~$</span><input id="t-inp" type="text" autocomplete="off" spellcheck="false" placeholder="type a command..."></div></div>
+  <button id="term-fab" title="Terminal (Ctrl+`)">⌨</button>
+</div>
+<script>
+'use strict';
+const S={booted:false,cmdOpen:false,termOpen:false,theme:localStorage.getItem('bos-theme')||'void',konami:[38,38,40,40,37,39,37,39,66,65],kSeq:[],panicActive:false,matrixActive:false,coffeeTimer:null,logoClicks:0,logoTimer:null,tHist:[],tHistIdx:-1,sigRunning:false,golRunning:true,sigWave:'sine',sigFreq:3,pwmDuty:50};
+let bootDone=false;
+const isMob=(/Mobi|Android/i.test(navigator.userAgent))||innerWidth<700;
+const idle=window.requestIdleCallback||(fn=>setTimeout(fn,1));
+
+/* ── CURSOR ── */
+if(!isMob){
+  const cur=document.getElementById('cur'),ring=document.getElementById('cur-ring');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
+  (function aR(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(aR)})();
+  const tEl=document.getElementById('cur-trail'),tD=[];
+  for(let i=0;i<12;i++){const d=document.createElement('div');d.className='trail-dot';const s=1.5*(1-i/12);d.style.cssText=`width:${s*6}px;height:${s*6}px;opacity:${(1-i/12)*.35}`;tEl.appendChild(d);tD.push({el:d,x:0,y:0})}
+  (function aT(){for(let i=11;i>0;i--){tD[i].x+=(tD[i-1].x-tD[i].x)*.35;tD[i].y+=(tD[i-1].y-tD[i].y)*.35;tD[i].el.style.left=tD[i].x+'px';tD[i].el.style.top=tD[i].y+'px'}tD[0].x+=(mx-tD[0].x)*.35;tD[0].y+=(my-tD[0].y)*.35;tD[0].el.style.left=tD[0].x+'px';tD[0].el.style.top=tD[0].y+'px';requestAnimationFrame(aT)})();
+}
+
+/* ── AURORA BG ── */
+const bgC=document.getElementById('bg-canvas'),bgX=bgC.getContext('2d');
+let W=bgC.width=innerWidth,H=bgC.height=innerHeight;
+window.addEventListener('resize',()=>{W=bgC.width=innerWidth;H=bgC.height=innerHeight});
+function hRgb(h){const r=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec((h||'').trim());return r?`${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}`:'124,58,237'}
+function drawBg(t){bgX.clearRect(0,0,W,H);const cs=getComputedStyle(document.documentElement);const tc={c1:cs.getPropertyValue('--v').trim()||'#7c3aed',c2:cs.getPropertyValue('--pink').trim()||'#ec4899',c3:cs.getPropertyValue('--cyan').trim()||'#06b6d4'};[{x:W*.15,y:H*.2,r:500,rgb:hRgb(tc.c1),s:.0004,p:0},{x:W*.8,y:H*.5,r:420,rgb:hRgb(tc.c2),s:.0003,p:2},{x:W*.5,y:H*.85,r:380,rgb:hRgb(tc.c3),s:.0005,p:4}].forEach(b=>{const ox=Math.sin(t*b.s+b.p)*80,oy=Math.cos(t*b.s*1.3+b.p)*60,g=bgX.createRadialGradient(b.x+ox,b.y+oy,0,b.x+ox,b.y+oy,b.r);g.addColorStop(0,`rgba(${b.rgb},.09)`);g.addColorStop(1,`rgba(${b.rgb},0)`);bgX.fillStyle=g;bgX.fillRect(0,0,W,H)});requestAnimationFrame(drawBg)}
+drawBg(0);
+
+/* ── PARTICLES ── */
+const pC=document.getElementById('particle-canvas'),pX=pC.getContext('2d');
+pC.width=W;pC.height=H;
+window.addEventListener('resize',()=>{pC.width=W;pC.height=H});
+const PTS=Array.from({length:isMob?30:70},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.3+.3,dx:(Math.random()-.5)*.28,dy:(Math.random()-.5)*.28,o:Math.random()*.35+.05}));
+let pLast=0;
+function drawP(ts){if(ts-pLast<(isMob?50:16)){requestAnimationFrame(drawP);return}pLast=ts;pX.clearRect(0,0,W,H);for(let i=0;i<PTS.length;i++){const p=PTS[i];pX.beginPath();pX.arc(p.x,p.y,p.r,0,Math.PI*2);pX.fillStyle=`rgba(167,139,250,${p.o})`;pX.fill();p.x+=p.dx;p.y+=p.dy;if(p.x<0||p.x>W)p.dx*=-1;if(p.y<0||p.y>H)p.dy*=-1;if(!isMob)for(let j=i+1;j<PTS.length;j++){const q=PTS[j],dx=p.x-q.x,dy=p.y-q.y,d=Math.sqrt(dx*dx+dy*dy);if(d<110){pX.beginPath();pX.strokeStyle=`rgba(124,58,237,${.07*(1-d/110)})`;pX.lineWidth=.6;pX.moveTo(p.x,p.y);pX.lineTo(q.x,q.y);pX.stroke()}}}requestAnimationFrame(drawP)}
+drawP(0);
+
+/* ── BOOT SEQUENCE ── */
+const BOOT=[
+  {ts:'0.000000',msg:'Basava OS v1.0.0 (embedded-x86_64) SMP PREEMPT_RT',t:'s'},
+  {ts:'0.000421',msg:'Linux version 6.8.0-basava (gcc 13.2.0)',t:'s'},
+  {ts:'0.001337',msg:'Calibrating delay loop... 4200.00 BogoMIPS',t:'ok'},
+  {ts:'0.004200',msg:'Detected 8 CPU cores · 64GB RAM · NVIDIA GPU',t:'ok'},
+  {ts:'0.008100',msg:'PCIe: scanning bus 0000:00... 12 devices found',t:'ok'},
+  {ts:'0.016500',msg:'Aurora rendering engine: initialized',t:'ok'},
+  {ts:'0.019200',msg:'Particle network: 70 nodes online',t:'ok'},
+  {ts:'0.022000',msg:'Qt6 runtime: mounted at /opt/qt6',t:'ok'},
+  {ts:'0.025500',msg:'CUDA 12.x: detected · compute capability 8.6',t:'ok'},
+  {ts:'0.029000',msg:'InsightFace buffalo_l: model weights verified',t:'ok'},
+  {ts:'0.033000',msg:'Terminal widget: online',t:'ok'},
+  {ts:'0.036000',msg:'WARNING: too many kernel panics in commit history',t:'w'},
+  {ts:'0.039000',msg:'portfolio.service: starting...',t:'ok'},
+  {ts:'0.042000',msg:'All systems nominal. Welcome.',t:'f'},
+];
+function runBoot(){
+  const log=document.getElementById('boot-log'),fill=document.getElementById('boot-fill'),pct=document.getElementById('boot-pct'),st=document.getElementById('boot-st');
+  let idx=0;
+  function next(){
+    if(bootDone)return finish();if(idx>=BOOT.length)return finish();
+    const bl=BOOT[idx++];const div=document.createElement('div');div.className='boot-line';
+    const ts=document.createElement('span');ts.className='boot-ts';ts.textContent=`[ ${bl.ts}]`;
+    const msg=document.createElement('span');msg.className=bl.t==='w'?'boot-warn':bl.t==='f'?'boot-fin':'';
+    div.appendChild(ts);div.appendChild(msg);
+    if(bl.t==='ok'){const ok=document.createElement('span');ok.className='boot-ok';ok.textContent='[ OK ]';div.appendChild(ok)}
+    log.appendChild(div);log.scrollTop=log.scrollHeight;
+    let ci=0;const spd=bl.t==='f'?30:8;
+    function type(){if(bootDone)return finish();if(ci<bl.msg.length){msg.textContent=bl.msg.slice(0,++ci);setTimeout(type,spd)}else{if(bl.t==='ok')setTimeout(()=>{const ok=div.querySelector('.boot-ok');if(ok)ok.style.opacity='1'},50);const p=Math.round(idx/BOOT.length*100);fill.style.width=p+'%';pct.textContent=p+'%';st.textContent=bl.msg.slice(0,32)+'...';setTimeout(next,bl.t==='f'?400:60+Math.random()*80)}}
+    setTimeout(type,30);
+  }
+  next();
+}
+function finish(){bootDone=true;document.getElementById('boot-fill').style.width='100%';document.getElementById('boot-pct').textContent='100%';document.getElementById('boot-st').textContent='portfolio ready.';setTimeout(()=>{document.getElementById('loader').classList.add('out');S.booted=true;startCounters();startTyping();idle(initLabs)},600)}
+function skipBoot(){if(!bootDone){bootDone=true;finish()}}
+document.addEventListener('keydown',e=>{if(!S.booted&&(e.key==='Escape'||e.key===' '))skipBoot()});
+document.getElementById('loader').addEventListener('click',skipBoot);
+runBoot();
+
+/* ── TYPING + COUNTERS ── */
+function startTyping(){const words=['actually work.','ship fast.','not crash at 3am.','run on linux.','blow your mind.'];const el=document.querySelector('.hl2');if(!el)return;let wi=0,ci=0,del=false;function tick(){const w=words[wi];if(!del){el.textContent=w.slice(0,++ci);el.setAttribute('data-text',el.textContent);if(ci===w.length){del=true;setTimeout(tick,1600);return}}else{el.textContent=w.slice(0,--ci);el.setAttribute('data-text',el.textContent);if(ci===0){del=false;wi=(wi+1)%words.length}}setTimeout(tick,del?38:75)}setTimeout(tick,400)}
+function startCounters(){document.querySelectorAll('.sv[data-count]').forEach(el=>{const t=+el.dataset.count;let c=0;const iv=setInterval(()=>{c=Math.min(c+1,t);el.textContent=c+'+';if(c>=t)clearInterval(iv)},40)})}
+
+/* ── THEME ENGINE ── */
+const THEMES={void:{n:'void',c:''},kernel:{n:'kernel · green phosphor',c:'theme-kernel'},plasma:{n:'plasma · cyan electric',c:'theme-plasma'},oxide:{n:'oxide · amber rust',c:'theme-oxide'},ghost:{n:'ghost · monochrome',c:'theme-ghost'}};
+const TE={
+  cur:S.theme,
+  apply(n){const prev=THEMES[this.cur];if(prev?.c)document.body.classList.remove(prev.c);const t=THEMES[n];if(!t)return;if(t.c)document.body.classList.add(t.c);this.cur=n;S.theme=n;localStorage.setItem('bos-theme',n);this.toast('theme: '+t.n);CP.refresh()},
+  cycle(){const k=Object.keys(THEMES);this.apply(k[(k.indexOf(this.cur)+1)%k.length])},
+  toast(m){const el=document.getElementById('theme-toast');document.getElementById('toast-txt').textContent=m;el.classList.add('show');clearTimeout(this._t);this._t=setTimeout(()=>el.classList.remove('show'),2500)},
+  load(){this.apply(S.theme)}
+};
+
+
+/* ── COMMAND PALETTE ── */
+function goTo(s){document.querySelector(s)?.scrollIntoView({behavior:'smooth'})}
+const CMDS=[
+  {id:'home',label:'Scroll to Top',desc:'go back to hero',icon:'🏠',group:'Navigate',action:()=>window.scrollTo({top:0,behavior:'smooth'})},
+  {id:'skills',label:'Astra Arsenal',desc:'technology stack & tools',icon:'⚙️',group:'Navigate',action:()=>goTo('#skills')},
+  {id:'projects',label:'Yantras',desc:'engineering projects',icon:'📂',group:'Navigate',action:()=>goTo('#projects'),shortcut:'P'},
+  {id:'labs',label:'Prayogshala',desc:'interactive experiments',icon:'🧪',group:'Navigate',action:()=>goTo('#labs')},
+  {id:'hardware',label:'Yantra Architecture',desc:'system architecture diagram',icon:'🔌',group:'Navigate',action:()=>goTo('#hardware')},
+  {id:'xp',label:'Sadhana',desc:'current focus & learning',icon:'📋',group:'Navigate',action:()=>goTo('#experience')},
+  {id:'contact',label:'Say Hi',desc:'get in touch',icon:'💬',group:'Navigate',action:()=>goTo('#contact'),shortcut:'C'},
+  {id:'terminal',label:'Open Terminal',desc:'interactive shell',icon:'⌨',group:'Tools',action:()=>TW.toggle(),shortcut:'`'},
+  {id:'sg',label:'Toggle Skill Graph',desc:'switch to force-directed view',icon:'🕸️',group:'Tools',action:()=>document.getElementById('vt-graph').click()},
+  {id:'t-void',label:'Theme: Void',desc:'default dark purple',icon:'🌑',group:'Themes',action:()=>TE.apply('void')},
+  {id:'t-kernel',label:'Theme: Kernel',desc:'green phosphor terminal',icon:'🟢',group:'Themes',action:()=>TE.apply('kernel')},
+  {id:'t-plasma',label:'Theme: Plasma',desc:'cyan electric',icon:'🔵',group:'Themes',action:()=>TE.apply('plasma')},
+  {id:'t-oxide',label:'Theme: Oxide',desc:'amber rust hardware',icon:'🟠',group:'Themes',action:()=>TE.apply('oxide')},
+  {id:'t-ghost',label:'Theme: Ghost',desc:'monochrome focus',icon:'👻',group:'Themes',action:()=>TE.apply('ghost')},
+  {id:'t-cycle',label:'Cycle Theme',desc:'rotate through all themes',icon:'🎨',group:'Themes',action:()=>TE.cycle(),shortcut:'T'},
+  {id:'ee-panic',label:'Kernel Panic',desc:'💀 uh oh',icon:'💀',group:'Secrets',action:()=>EE.kernelPanic()},
+  {id:'ee-matrix',label:'sudo hire-me',desc:'you know what this does',icon:'🟩',group:'Secrets',action:()=>EE.matrix()},
+  {id:'ee-crt',label:'Toggle CRT Mode',desc:'retro phosphor effect',icon:'📺',group:'Secrets',action:()=>EE.crtMode()},
+  {id:'github',label:'Open GitHub',desc:'view source & projects',icon:'⌥',group:'Links',action:()=>open('https://github.com/basavanidode','_blank')},
+  {id:'linkedin',label:'Open LinkedIn',desc:'professional profile',icon:'in',group:'Links',action:()=>open('https://www.linkedin.com/in/basavakiran9353974163','_blank')},
+  {id:'email',label:'Send Email',desc:'get in touch directly',icon:'✉',group:'Links',action:()=>open('mailto:basavakiran200@gmail.com')},
+];
+const CP={
+  act:-1,fil:[],
+  open(){S.cmdOpen=true;document.getElementById('cmd-overlay').classList.add('open');const inp=document.getElementById('cmd-input');inp.value='';inp.focus();this.filter('');this.act=0},
+  close(){S.cmdOpen=false;document.getElementById('cmd-overlay').classList.remove('open')},
+  toggle(){S.cmdOpen?this.close():this.open()},
+  filter(q){q=q.toLowerCase().trim();this.fil=q?CMDS.filter(c=>c.label.toLowerCase().includes(q)||c.group.toLowerCase().includes(q)||(c.desc&&c.desc.toLowerCase().includes(q))):CMDS;this.act=this.fil.length?0:-1;this.render()},
+  render(){
+    const el=document.getElementById('cmd-results'),q=document.getElementById('cmd-input').value.toLowerCase();
+    const grps={};this.fil.forEach(c=>(grps[c.group]=grps[c.group]||[]).push(c));
+    el.innerHTML='';let gi=0;
+    Object.entries(grps).forEach(([gn,cmds])=>{
+      const lbl=document.createElement('div');lbl.className='cmd-group-lbl';lbl.textContent=gn;el.appendChild(lbl);
+      cmds.forEach(cmd=>{
+        const idx=gi++;const row=document.createElement('div');row.className='cmd-row'+(idx===this.act?' active':'');
+        const hl=q?cmd.label.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'),'<mark>$1</mark>'):cmd.label;
+        row.innerHTML=`<div class="cmd-row-ico">${cmd.icon}</div><div style="flex:1"><div class="cmd-row-lbl">${hl}${cmd.desc?`<small>${cmd.desc}</small>`:''}</div></div>${cmd.shortcut?`<div class="cmd-shortcut">${cmd.shortcut}</div>`:''}`;
+        row.addEventListener('click',()=>{cmd.action();this.close()});
+        row.addEventListener('mouseenter',()=>{this.act=idx;el.querySelectorAll('.cmd-row').forEach((r,i)=>r.classList.toggle('active',i===idx))});
+        el.appendChild(row);
+      });
+    });
+  },
+  nav(d){this.act=Math.max(0,Math.min(this.fil.length-1,this.act+d));document.querySelectorAll('.cmd-row').forEach((r,i)=>r.classList.toggle('active',i===this.act));document.querySelectorAll('.cmd-row')[this.act]?.scrollIntoView({block:'nearest'})},
+  exec(){if(this.act>=0&&this.fil[this.act]){this.fil[this.act].action();this.close()}},
+  refresh(){if(S.cmdOpen)this.filter(document.getElementById('cmd-input').value)}
+};
+document.getElementById('cmd-input').addEventListener('input',e=>CP.filter(e.target.value));
+document.getElementById('cmd-input').addEventListener('keydown',e=>{if(e.key==='ArrowDown'){e.preventDefault();CP.nav(1)}else if(e.key==='ArrowUp'){e.preventDefault();CP.nav(-1)}else if(e.key==='Enter')CP.exec();else if(e.key==='Escape')CP.close()});
+document.getElementById('cmd-overlay').addEventListener('click',e=>{if(e.target.id==='cmd-overlay')CP.close()});
+document.getElementById('nav-cmd-btn').addEventListener('click',()=>CP.open());
+
+/* ── KEYBOARD ── */
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();CP.toggle();return}
+  if((e.metaKey||e.ctrlKey)&&e.key==='`'){e.preventDefault();TW.toggle();return}
+  if(!S.cmdOpen&&!S.termOpen){
+    if(e.key==='t')TE.cycle();
+    if(e.key==='/')  {e.preventDefault();CP.open()}
+    if(e.key==='Escape'){document.getElementById('pm-ov').classList.remove('open')}
+  }
+  S.kSeq.push(e.keyCode);S.kSeq=S.kSeq.slice(-10);
+  if(JSON.stringify(S.kSeq)===JSON.stringify(S.konami))EE.crtMode();
+});
+
+TE.load();
+
+/* ── EASTER EGGS ── */
+const EE={
+  crtMode(){document.body.classList.toggle('crt-mode');TE.toast(document.body.classList.contains('crt-mode')?'CRT mode ON 📺':'CRT mode OFF')},
+  kernelPanic(){if(S.panicActive)return;S.panicActive=true;const el=document.getElementById('kpanic');el.classList.add('show');setTimeout(()=>{el.classList.remove('show');S.panicActive=false},3500)},
+  matrix(){if(S.matrixActive)return;S.matrixActive=true;const ov=document.getElementById('matrix-ov'),cv=document.getElementById('matrix-cv'),ctx=cv.getContext('2d');ov.classList.add('show');cv.width=innerWidth;cv.height=innerHeight;const cols=Math.floor(innerWidth/14),drops=Array(cols).fill(1),chars='アイウエオカキクケコ0123456789ABCDEF<>{}[]!@#$';const fr=setInterval(()=>{ctx.fillStyle='rgba(0,0,0,.04)';ctx.fillRect(0,0,cv.width,cv.height);ctx.fillStyle='#00ff41';ctx.font='13px monospace';drops.forEach((y,i)=>{ctx.fillText(chars[Math.floor(Math.random()*chars.length)],i*14,y*14);if(y*14>cv.height&&Math.random()>.975)drops[i]=0;drops[i]++})},33);const close=()=>{clearInterval(fr);ov.classList.remove('show');S.matrixActive=false;document.removeEventListener('keydown',close);ov.removeEventListener('click',close)};setTimeout(()=>{document.addEventListener('keydown',close);ov.addEventListener('click',close)},2500)},
+  initCoffee(){const chip=document.getElementById('coffee-chip'),sv=document.getElementById('coffee-sv');chip.addEventListener('mouseenter',()=>{S.coffeeTimer=setTimeout(()=>{sv.textContent='1000++';sv.style.color='var(--amber)';TE.toast("⏱️ debug hours stack up.");setTimeout(()=>{sv.textContent='1000+';sv.style.color=''},2000)},1500)});chip.addEventListener('mouseleave',()=>clearTimeout(S.coffeeTimer))},
+  initLogo(){const el=document.getElementById('nav-logo');el.addEventListener('click',()=>{S.logoClicks++;clearTimeout(S.logoTimer);if(S.logoClicks>=3){S.logoClicks=0;TE.cycle()}S.logoTimer=setTimeout(()=>{S.logoClicks=0},600)})}
+};
+EE.initCoffee();EE.initLogo();
+
+/* ── MOBILE NAV ── */
+document.getElementById('nav-mob-btn').addEventListener('click',()=>document.getElementById('nav-links').classList.toggle('mob-open'));
+document.addEventListener('click',e=>{if(!e.target.closest('nav'))document.getElementById('nav-links').classList.remove('mob-open')});
+
+/* ── TILT CARDS ── */
+document.querySelectorAll('.tilt-card').forEach(c=>{
+  c.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;c.style.transform=`perspective(600px) rotateY(${x*10}deg) rotateX(${-y*10}deg) translateY(-5px)`});
+  c.addEventListener('mouseleave',()=>{c.style.transform=''});
+});
+
+/* ── BENTO RADIAL ── */
+document.querySelectorAll('.b-card').forEach(c=>{c.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect();c.style.setProperty('--mx',(e.clientX-r.left)+'px');c.style.setProperty('--my',(e.clientY-r.top)+'px')})});
+
+/* ── MAGNETIC ── */
+if(!isMob)document.querySelectorAll('.mag').forEach(el=>{el.addEventListener('mousemove',e=>{const r=el.getBoundingClientRect(),x=(e.clientX-r.left-r.width/2)*.25,y=(e.clientY-r.top-r.height/2)*.25;el.style.transform=`translate(${x}px,${y}px)`});el.addEventListener('mouseleave',()=>{el.style.transform=''})});
+
+/* ── SCROLL REVEAL ── */
+const rObs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')}),{threshold:.08});
+document.querySelectorAll('.rev').forEach(el=>rObs.observe(el));
+
+/* ── NAV ACTIVE ── */
+const nls=document.querySelectorAll('.nav-links a');
+new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){nls.forEach(a=>a.classList.remove('active'));const l=document.querySelector(`.nav-links a[href="#${e.target.id}"]`);if(l)l.classList.add('active')}})},{threshold:.3}).observe;
+const sObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){nls.forEach(a=>a.classList.remove('active'));const l=document.querySelector(`.nav-links a[href="#${e.target.id}"]`);if(l)l.classList.add('active')}})},{threshold:.3});
+document.querySelectorAll('section[id]').forEach(s=>sObs.observe(s));
+
+/* ── SKILL GRAPH ── */
+const SN=[
+  {id:'linux',label:'Linux\nKernel',g:'e',x:140,y:100,r:22},{id:'yocto',label:'Yocto',g:'e',x:70,y:200,r:15},{id:'rtos',label:'RTOS',g:'e',x:220,y:210,r:15},{id:'drivers',label:'Drivers',g:'e',x:140,y:295,r:15},
+  {id:'qt6',label:'Qt6',g:'u',x:370,y:90,r:20},{id:'cpp',label:'C/C++',g:'u',x:300,y:195,r:15},{id:'python',label:'Python',g:'u',x:445,y:185,r:18},
+  {id:'pcie',label:'PCIe',g:'h',x:565,y:100,r:16},{id:'fpga',label:'FPGA',g:'h',x:650,y:195,r:15},
+  {id:'cuda',label:'CUDA',g:'a',x:555,y:265,r:17},{id:'opencv',label:'OpenCV',g:'a',x:470,y:300,r:16},{id:'insight',label:'InsightFace',g:'a',x:640,y:325,r:14},
+  {id:'gas',label:'GAS',g:'t',x:290,y:335,r:13},
+];
+const SE=[['linux','yocto'],['linux','rtos'],['linux','drivers'],['linux','pcie'],['qt6','cpp'],['qt6','python'],['cpp','linux'],['python','opencv'],['python','insight'],['cuda','opencv'],['cuda','insight'],['pcie','fpga'],['opencv','insight'],['python','gas'],['rtos','drivers']];
+function initSkillGraph(){
+  const canvas=document.getElementById('sg-canvas');
+  const CW=canvas.offsetWidth||700,CH=300;canvas.width=CW;canvas.height=CH;
+  const ctx=canvas.getContext('2d');
+  const nodes=SN.map(n=>({...n,x:n.x/720*CW,y:n.y/380*CH,vx:0,vy:0}));
+  let drag=null,hov=null,raf=null;
+  function gC(g){const cs=getComputedStyle(document.documentElement);const m={e:cs.getPropertyValue('--v2'),u:cs.getPropertyValue('--green'),h:cs.getPropertyValue('--pink'),a:cs.getPropertyValue('--amber'),t:cs.getPropertyValue('--cyan')};return(m[g]||'#8b5cf6').trim()}
+  function hit(x,y){return nodes.find(n=>Math.hypot(n.x-x,n.y-y)<n.r+4)||null}
+  function sim(){
+    nodes.forEach(a=>{if(a===drag)return;nodes.forEach(b=>{if(a===b)return;const dx=a.x-b.x,dy=a.y-b.y,d=Math.max(Math.hypot(dx,dy),1),f=280/(d*d);a.vx+=dx/d*f;a.vy+=dy/d*f});a.vx+=(CW/2-a.x)*.0006;a.vy+=(CH/2-a.y)*.0006});
+    SE.forEach(([ai,bi])=>{const a=nodes.find(n=>n.id===ai),b=nodes.find(n=>n.id===bi);if(!a||!b)return;const dx=b.x-a.x,dy=b.y-a.y,d=Math.max(Math.hypot(dx,dy),1),f=(d-110)*.03;if(a!==drag){a.vx+=dx/d*f;a.vy+=dy/d*f}if(b!==drag){b.vx-=dx/d*f;b.vy-=dy/d*f}});
+    nodes.forEach(n=>{if(n===drag)return;n.vx*=.85;n.vy*=.85;n.x=Math.max(n.r+5,Math.min(CW-n.r-5,n.x+n.vx));n.y=Math.max(n.r+5,Math.min(CH-n.r-5,n.y+n.vy))});
+  }
+  function draw(){
+    ctx.clearRect(0,0,CW,CH);
+    SE.forEach(([ai,bi])=>{const a=nodes.find(n=>n.id===ai),b=nodes.find(n=>n.id===bi);if(!a||!b)return;const hi=hov&&(hov.id===ai||hov.id===bi);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle=hi?'rgba(167,139,250,.55)':'rgba(139,92,246,.1)';ctx.lineWidth=hi?1.5:.8;ctx.stroke()});
+    nodes.forEach(n=>{
+      const isH=hov?.id===n.id,isC=hov&&SE.some(([a,b])=>(a===hov.id&&b===n.id)||(b===hov.id&&a===n.id));
+      ctx.save();ctx.globalAlpha=(hov&&!isH&&!isC)?0.15:1;
+      const col=gC(n.g);
+      ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.fillStyle=col+'26';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=isH?2.5:1.2;ctx.stroke();
+      if(isH){ctx.beginPath();ctx.arc(n.x,n.y,n.r+6,0,Math.PI*2);ctx.setLineDash([3,3]);ctx.strokeStyle=col+'80';ctx.stroke();ctx.setLineDash([])}
+      ctx.fillStyle='#c4b5fd';ctx.font=`${n.r>17?'600 ':'' }9px JetBrains Mono,monospace`;ctx.textAlign='center';ctx.textBaseline='middle';
+      const ls=n.label.split('\n');ls.length===2?(ctx.fillText(ls[0],n.x,n.y-5),ctx.fillText(ls[1],n.x,n.y+5)):ctx.fillText(n.label,n.x,n.y);
+      ctx.restore();
+    });
+  }
+  function loop(){sim();draw();raf=requestAnimationFrame(loop)}
+  canvas.addEventListener('mousemove',e=>{const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*(CW/r.width),y=(e.clientY-r.top)*(CH/r.height);drag?(drag.x=x,drag.y=y,drag.vx=0,drag.vy=0):hov=hit(x,y);canvas.style.cursor=hov?'grab':'default'});
+  canvas.addEventListener('mousedown',e=>{const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*(CW/r.width),y=(e.clientY-r.top)*(CH/r.height);drag=hit(x,y)});
+  canvas.addEventListener('mouseup',()=>{drag=null});
+  canvas.addEventListener('mouseleave',()=>{drag=null;hov=null});
+  document.getElementById('vt-graph').addEventListener('click',()=>{document.getElementById('bento-wrap').style.display='none';document.getElementById('sg-wrap').classList.add('show');document.getElementById('vt-grid').classList.remove('active');document.getElementById('vt-graph').classList.add('active');if(!raf)loop()});
+  document.getElementById('vt-grid').addEventListener('click',()=>{document.getElementById('bento-wrap').style.display='';document.getElementById('sg-wrap').classList.remove('show');document.getElementById('vt-grid').classList.add('active');document.getElementById('vt-graph').classList.remove('active')});
+}
+idle(initSkillGraph);
+
+/* ── PROJECT DATA + MODAL (UPDATED) ── */
+const PD={
+  hwval:{title:'Embedded Hardware Validation Framework',badges:['Qt6','C++','Linux','Automation'],
+    desc:'Unified validation framework designed to test and verify hardware interfaces through a GUI-driven workflow. Modules for CPU, memory, PCIe, network, storage, and custom peripherals.',
+    arch:'Qt6 MainWindow ──► Test Manager\n  ├── CPU Stress Test (multi‑core)\n  ├── Memory Bandwidth & ECC\n  ├── PCIe Loopback / Device Enum\n  ├── Ethernet Throughput / UDP\n  ├── Storage Read/Write / IOPS\n  └── Custom Peripheral Module\nBackend CLI (C++) ↔ GUI via QProcess\nResults: JSON logs + real‑time dash',
+    bars:[{l:'Qt6 / C++',v:82},{l:'Linux Integration',v:75},{l:'Automation Coverage',v:70},{l:'UI / UX',v:78}],
+    hls:[{t:'Core Challenge',b:'Abstracting diverse hardware tests behind a unified GUI with dynamic module loading'},{t:'Key Feature',b:'Per-module color-coded results: green pass, red fail, amber warning'},{t:'Platform',b:'Linux (RHEL/Ubuntu) — air-gapped defense systems support'},{t:'Outcome',b:'Replaced 12 manual validation steps with one-click test run'}]},
+  distro:{title:'Yocto BSP Build Environment',badges:['Yocto','Linux','QEMU','BSP'],
+    desc:'Development and customization of Linux distributions including package integration, image generation, and deployment workflows for embedded targets.',
+    arch:'Yocto Layer Stack\n  ├── meta-custom (BSP, kernel config)\n  ├── meta-qt6 (Qt toolchain)\n  ├── meta-opencv (vision libs)\n  └── meta-cuda (GPU enablement)\nBitBake → .wic image → QEMU test → deploy to HW',
+    bars:[{l:'Yocto / BitBake',v:75},{l:'Kernel Configuration',v:68},{l:'Image Generation',v:80},{l:'QEMU Testing',v:65}],
+    hls:[{t:'Purpose',b:'Reproducible embedded Linux builds with custom package sets and security hardening'},{t:'Image Types',b:'tar.bz2, ext4, wic, ISO — ready for various deployment scenarios'},{t:'Validation',b:'Boot tested in QEMU before flashing to physical SBCs'},{t:'Distro',b:'Based on Poky / Yocto Project, tuned for real-time and AI workloads'}]},
+  fft:{title:'CUDA FFT Demonstrator',badges:['CUDA','C++','Signal Processing'],
+    desc:'High-performance FFT processing engine leveraging GPU acceleration for mathematical and signal analysis workloads. Supports 1D/2D transforms with batched operations.',
+    arch:'Host (C++) ──► cuFFT Plan\n  ├── 1D FFT (batch mode)\n  ├── 2D R2C / C2C\n  └── Overlap‑and‑add convolution\nCUDA streams + pinned memory for max throughput',
+    bars:[{l:'CUDA / cuFFT',v:78},{l:'C++ Host Code',v:72},{l:'Performance Tuning',v:65},{l:'Signal Processing',v:70}],
+    hls:[{t:'Throughput',b:'Up to 200+ GFLOPs on 1M-point FFT with NVIDIA Ampere GPU'},{t:'Use Cases',b:'Spectrum analysis, vibration monitoring, sensor signal processing'},{t:'Optimization',b:'CUDA streams with double buffering to hide PCIe latency'},{t:'Validation',b:'Results compared with FFTW — <1e-6 relative error'}]},
+  visionpipe:{title:'Jetson Vision Pipeline',badges:['OpenCV','TensorRT','CUDA'],
+    desc:'Real-time computer vision pipeline featuring face detection, face recognition, and inference optimization on edge devices.',
+    arch:'Camera → OpenCV capture\n  ├── YuNet Face Detection (OpenCV DNN)\n  ├── TensorRT optimized Recognition\n  └── Tracking & Logging\nAsynchronous pipeline: capture / infer / display threads',
+    bars:[{l:'OpenCV Integration',v:80},{l:'TensorRT Acceleration',v:72},{l:'Recognition Accuracy',v:75},{l:'Pipeline Latency',v:68}],
+    hls:[{t:'Performance',b:'30 FPS on Jetson Xavier NX with FP16 TensorRT engine'},{t:'Model',b:'Custom ResNet‑50 trained with ArcFace loss, converted to ONNX then TensorRT'},{t:'Threading',b:'3-stage async pipeline prevents frame drops under heavy load'},{t:'Edge',b:'Runs entirely offline — no cloud dependency'}]},
+  sysrely:{title:'Watchdog & System Reliability Validation',badges:['Linux','Monitoring','Automation'],
+    desc:'System health verification platform focused on recovery validation, monitoring, logging, and long-duration stability testing.',
+    arch:'Watchdog Daemon\n  ├── Process Monitoring (PID tracking)\n  ├── Resource Alerts (CPU/Mem/Disk)\n  ├── Recovery Scripts (systemd units)\n  └── Log Aggregation (journald → SQLite)\nCLI + Web Dashboard for status overview',
+    bars:[{l:'Linux Service Management',v:82},{l:'Monitoring Accuracy',v:75},{l:'Recovery Automation',v:70},{l:'Dashboard',v:65}],
+    hls:[{t:'Goal',b:'Maximize system uptime in unattended embedded environments'},{t:'Recovery',b:'Automatic restart of failed services with escalation path'},{t:'Testing',b:'Injects faults (kill processes, fill disk) to validate recovery'},{t:'Logging',b:'Structured logs in SQLite for post-mortem analysis'}]},
+  netval:{title:'Ethernet & UDP Validation Tool',badges:['Ethernet','UDP','Linux'],
+    desc:'Toolkit for network interface validation, UDP communication testing, connectivity verification, and diagnostics.',
+    arch:'CLI + GUI\n  ├── Interface Discovery (ethtool / sysfs)\n  ├── UDP Packet Generator / Sink\n  ├── Ping Flood / Latency Test\n  └── Bonding & Failover Test\nPython + C backends with Qt6 frontend',
+    bars:[{l:'UDP Testing',v:78},{l:'Interface Analysis',v:75},{l:'Automation Scripts',v:70},{l:'Qt6 GUI',v:68}],
+    hls:[{t:'Key Feature',b:'Automated link-flap and failover testing with msec reporting'},{t:'Protocols',b:'UDP unicast/broadcast, ICMP, custom heartbeat'},{t:'Platform',b:'Linux — supports ethtool, iproute2, iperf integration'},{t:'Use',b:'Pre-deployment validation of NICs in COTS hardware'}]},
+  hwtest:{title:'Hardware Interface Test Suite',badges:['Linux','C/C++','Automation'],
+    desc:'Validation suite for GPIO, Serial, Ethernet, USB, SATA, RTC, Audio, Display, and related hardware interfaces.',
+    arch:'Modular Test Harness\n  ├── GPIO: toggle / readback\n  ├── Serial: loopback / speed test\n  ├── USB: device enumeration / data\n  ├── SATA: read/write / SMART\n  ├── RTC: drift measurement\n  └── Audio/Display: pattern test\nResults aggregated in JSON report',
+    bars:[{l:'Interface Coverage',v:85},{l:'C/C++ Drivers',v:72},{l:'Test Automation',v:78},{l:'Reporting',v:70}],
+    hls:[{t:'Coverage',b:'10+ hardware interface types tested with a single tool'},{t:'Architecture',b:'Plugin-based test modules — easy to extend for new hardware'},{t:'Reporting',b:'JSON output for CI/CD integration; HTML report for humans'},{t:'Real-world',b:'Used to validate SBCs before shipping to defense customers'}]},
+  edgecv:{title:'Embedded AI Vision Platform',badges:['Jetson','OpenCV','TensorRT','CUDA'],
+    desc:'Embedded AI platform focused on accelerated computer vision workloads and edge deployment optimization.',
+    arch:'NVIDIA Jetson Platform\n  ├── OpenCV Capture + Preprocess\n  ├── TensorRT Inference Engine\n  ├── Multi‑stream Pipeline (CSI + IP)\n  └── MQTT Telemtery & Alerts\nPower‑optimized (MAXN / 15W profiles)',
+    bars:[{l:'Jetson Optimization',v:80},{l:'TensorRT',v:72},{l:'OpenCV Integration',v:75},{l:'Deployment',v:68}],
+    hls:[{t:'Target',b:'NVIDIA Jetson AGX Xavier / Orin with DeepStream SDK'},{t:'Performance',b:'4 simultaneous 1080p streams at 30 FPS with FP16 models'},{t:'Power',b:'Runs under 15W in production mode'},{t:'Edge Use',b:'Fully offline — no cloud, all processing on device'}]}
+};
+
+const PM={
+  open(id){const d=PD[id];if(!d)return;
+    document.getElementById('pm-title').textContent=d.title;
+    document.getElementById('pm-meta').innerHTML=d.badges.map(b=>`<span class="pm-badge">${b}</span>`).join('');
+    document.getElementById('pm-desc').textContent=d.desc;
+    document.getElementById('pm-arch').textContent=d.arch;
+    document.getElementById('pm-bars').innerHTML=d.bars.map(b=>`<div class="pm-bar-item"><div class="pm-bar-lbl"><span>${b.l}</span><span>${b.v}%</span></div><div class="pm-bar-track"><div class="pm-bar-fill" data-w="${b.v}"></div></div></div>`).join('');
+    document.getElementById('pm-hls').innerHTML=d.hls.map(h=>`<div class="pm-hl"><strong>${h.t}</strong>${h.b}</div>`).join('');
+    const ov=document.getElementById('pm-ov');ov.classList.add('open');document.getElementById('pm').scrollTop=0;
+    setTimeout(()=>document.querySelectorAll('.pm-bar-fill').forEach(el=>{el.style.width=el.dataset.w+'%'}),200);
+  },
+  close(){document.getElementById('pm-ov').classList.remove('open')}
+};
+document.querySelectorAll('.pc[data-id]').forEach(c=>{
+  c.addEventListener('click',()=>PM.open(c.dataset.id));
+  c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();PM.open(c.dataset.id)}});
+});
+document.getElementById('pm-close').addEventListener('click',()=>PM.close());
+document.getElementById('pm-ov').addEventListener('click',e=>{if(e.target.id==='pm-ov')PM.close()});
+
+/* ── PROJECT FILTERS ── */
+document.querySelectorAll('.pf-btn').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.pf-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const f=btn.dataset.filter;document.querySelectorAll('.pc[data-tags]').forEach(c=>{const show=f==='all'||c.dataset.tags.includes(f);c.style.opacity=show?'1':'.2';c.style.transform=show?'':'scale(.97)';c.style.pointerEvents=show?'':'none'})})});
+
+/* ── HARDWARE TOPOLOGY (UPDATED WORKFLOW) ── */
+function initTopo(){
+  const svg=document.getElementById('topo-svg'),tip=document.getElementById('topo-tip');
+  const NS='http://www.w3.org/2000/svg';
+  const NODES=[
+    {id:'app',x:40,y:40,w:150,h:55,l:'Application Layer',s:'Qt GUI / Validation Dashboards',col:'--v2',info:'User interface built with Qt6/PySide6. Hardware validation dashboards, real-time monitoring.'},
+    {id:'val',x:250,y:40,w:150,h:55,l:'Validation Framework',s:'C++ / Python Orchestration',col:'--amber',info:'C++/Python test orchestration, hardware interface abstraction, plugin architecture.'},
+    {id:'user',x:460,y:40,w:150,h:55,l:'Linux User Space',s:'System Services / Sysfs',col:'--green',info:'System services, device file interactions (sysfs, /dev), process management, runtime.'},
+    {id:'drv',x:250,y:160,w:150,h:55,l:'Device Drivers',s:'Kernel Modules',col:'--pink',info:'Kernel modules for PCIe, UART, SPI, I2C, GPIO. Char/block drivers, interrupt handling.'},
+    {id:'iface',x:460,y:160,w:150,h:55,l:'Hardware Interfaces',s:'PCIe / Ethernet / UART',col:'--cyan',info:'PCIe, Ethernet, UART, SPI, I2C, GPIO physical layer, FPGA bridges.'},
+    {id:'hw',x:340,y:270,w:160,h:55,l:'Target Hardware',s:'COTS / SFF / Jetson',col:'--v3',info:'COTS/SFF boards, XMC mezzanine, NVIDIA Jetson, custom carrier.'},
+  ];
+  const EDGES=[{f:'app',t:'val',l:'',sp:22},{f:'val',t:'user',l:'',sp:20},{f:'user',t:'drv',l:'',sp:28},{f:'drv',t:'iface',l:'',sp:24},{f:'iface',t:'hw',l:'',sp:30}];
+  const nm={};NODES.forEach(n=>nm[n.id]=n);
+  const cs=getComputedStyle(document.documentElement);
+  EDGES.forEach(e=>{
+    const a=nm[e.f],b=nm[e.t];if(!a||!b)return;
+    const x1=a.x+a.w/2,y1=a.y+a.h/2,x2=b.x+b.w/2,y2=b.y+b.h/2,mx=(x1+x2)/2;
+    const path=document.createElementNS(NS,'path');path.setAttribute('id','ep-'+e.f+e.t);path.setAttribute('d',`M${x1},${y1} Q${mx},${y1} ${x2},${y2}`);path.setAttribute('stroke','rgba(139,92,246,.18)');path.setAttribute('stroke-width','1.5');path.setAttribute('fill','none');svg.appendChild(path);
+    const circ=document.createElementNS(NS,'circle');circ.setAttribute('r','3');circ.setAttribute('fill',cs.getPropertyValue(a.col)||'#a78bfa');circ.setAttribute('opacity','0');svg.appendChild(circ);
+    const am=document.createElementNS(NS,'animateMotion');am.setAttribute('dur',e.sp*55+'ms');am.setAttribute('repeatCount','indefinite');am.setAttribute('calcMode','linear');
+    const mp=document.createElementNS(NS,'mpath');mp.setAttributeNS('http://www.w3.org/1999/xlink','href','#ep-'+e.f+e.t);am.appendChild(mp);circ.appendChild(am);
+    const ao=document.createElementNS(NS,'animate');ao.setAttribute('attributeName','opacity');ao.setAttribute('values','0;1;1;0');ao.setAttribute('dur',e.sp*55+'ms');ao.setAttribute('repeatCount','indefinite');circ.appendChild(ao);
+  });
+  NODES.forEach(n=>{
+    const g=document.createElementNS(NS,'g');g.setAttribute('class','topo-node');g.setAttribute('tabindex','0');
+    const rect=document.createElementNS(NS,'rect');rect.setAttribute('x',n.x);rect.setAttribute('y',n.y);rect.setAttribute('width',n.w);rect.setAttribute('height',n.h);rect.setAttribute('rx','8');rect.setAttribute('fill','rgba(255,255,255,.02)');rect.setAttribute('stroke',cs.getPropertyValue(n.col)||'#a78bfa');rect.setAttribute('stroke-width','1.5');
+    const lbl=document.createElementNS(NS,'text');lbl.setAttribute('x',n.x+n.w/2);lbl.setAttribute('y',n.y+n.h/2-9);lbl.setAttribute('class','topo-lbl');lbl.setAttribute('fill',cs.getPropertyValue(n.col)||'#a78bfa');lbl.setAttribute('text-anchor','middle');lbl.textContent=n.l;
+    const sub=document.createElementNS(NS,'text');sub.setAttribute('x',n.x+n.w/2);sub.setAttribute('y',n.y+n.h/2+10);sub.setAttribute('class','topo-sub');sub.setAttribute('text-anchor','middle');sub.textContent=n.s;
+    g.appendChild(rect);g.appendChild(lbl);g.appendChild(sub);svg.appendChild(g);
+    const showTip=(ex,ey)=>{const wr=document.getElementById('topo-wrap').getBoundingClientRect();tip.innerHTML=`<strong style="color:var(${n.col})">${n.l}</strong><br><span style="font-size:10px;color:var(--muted2)">${n.info}</span>`;tip.style.opacity='1';tip.style.left=Math.min(ex-wr.left+12,wr.width-240)+'px';tip.style.top=(ey-wr.top+12)+'px'};
+    g.addEventListener('mouseenter',e=>showTip(e.clientX,e.clientY));
+    g.addEventListener('mousemove',e=>showTip(e.clientX,e.clientY));
+    g.addEventListener('mouseleave',()=>{tip.style.opacity='0'});
+    g.addEventListener('focus',()=>{tip.innerHTML=`<strong>${n.l}</strong><br>${n.info}`;tip.style.opacity='1';tip.style.left='10px';tip.style.top='10px'});
+    g.addEventListener('blur',()=>{tip.style.opacity='0'});
+  });
+}
+idle(initTopo);
+
+/* ── TERMINAL (with new commands) ── */
+const TVFS={'skills/embedded':'Linux Kernel · Device Drivers · Yocto BSP · RTOS · RHEL · Ubuntu','skills/gui':'Qt6 · PySide6 · PyQt5 · QML · C++ · Python','skills/hardware':'PCIe · XMC/VME · FPGA · MIL-STD-1553 · COTS/SFF','skills/ai':'OpenCV · CUDA · InsightFace · HOG+SVM · PyTorch','skills/automation':'Google Apps Script · Python · JavaScript · HTML/CSS','projects/sentinel':'SentinelAI v3 — dual-camera face recognition · Python · InsightFace · PyQt5','projects/sbcprofiler':'SBC Profiler — automated COTS profiling · Python · paramiko · RHEL','projects/cpugpu':'CPU/GPU Validator — Qt6 hardware validation · C++ · CUDA · CMake','projects/rupeex':'Rupeex — personal finance analyzer · Python · Streamlit · SQLite'};
+const THELP=`<span class="tok2">available commands:</span>
+  <span class="ti2">whoami</span>         — identity
+  <span class="ti2">ls [path]</span>      — list directory
+  <span class="ti2">cat [file]</span>     — read file
+  <span class="ti2">uname -a</span>       — system info
+  <span class="ti2">neofetch</span>       — sysinfo panel
+  <span class="ti2">./contact.sh</span>   — scroll to contact
+  <span class="ti2">github</span>         — open GitHub profile
+  <span class="ti2">linkedin</span>       — open LinkedIn profile
+  <span class="ti2">email</span>          — send an email
+  <span class="ti2">theme [name]</span>   — void kernel plasma oxide ghost
+  <span class="ti2">history</span>        — command history
+  <span class="ti2">sudo hire-me</span>   — 👀
+  <span class="ti2">clear</span>          — clear terminal
+  <span class="ti2">help</span>           — show this`;
+const TW={
+  open(){S.termOpen=true;const w=document.getElementById('term-win');w.classList.add('open');document.getElementById('t-inp').focus();if(!document.getElementById('t-body').children.length)this.welcome()},
+  close(){S.termOpen=false;document.getElementById('term-win').classList.remove('open')},
+  toggle(){S.termOpen?this.close():this.open()},
+  welcome(){this.pr('<span class="ts2">BASAVA OS v1.0.0 — interactive shell</span>');this.pr('<span class="ti2">type <span class="tok2">help</span> for commands · <span class="tok2">↑↓</span> history</span>');this.pr('')},
+  pr(html){const b=document.getElementById('t-body');const l=document.createElement('div');l.className='t-line';l.innerHTML=html||' ';b.appendChild(l);b.scrollTop=b.scrollHeight},
+  exec(raw){
+    const cmd=raw.trim();if(!cmd)return;
+    S.tHist.unshift(cmd);S.tHistIdx=-1;
+    this.pr(`<span class="tp2">basava@portfolio:~$</span> <span class="tc2">${cmd}</span>`);
+    const [c,...args]=cmd.split(' ');
+    switch(c){
+      case 'whoami':this.pr('embedded engineer. builder. linux nerd.');this.pr('likes: kernel panics at 3am, qt guis that ship, too much coffee.');break;
+      case 'ls':{const p=args[0]||'';if(!p||p==='.'||p==='/')this.pr('<span class="tok2">skills/   projects/   contact</span>');else if(p.startsWith('skills'))this.pr('<span class="tok2">embedded/  gui/  hardware/  ai/  automation/</span>');else if(p.startsWith('projects'))this.pr('<span class="tok2">sentinel  sbcprofiler  cpugpu  rupeex</span>');else this.pr(`<span class="te2">ls: ${p}: No such file or directory</span>`);break}
+      case 'cat':{const f=args[0]||'';const v=TVFS[f];v?this.pr(`<span class="tok2">${v}</span>`):this.pr(`<span class="te2">cat: ${f}: No such file or directory</span>`);break}
+      case 'uname':this.pr('Linux basava-portfolio 6.8.0-basava #1 SMP PREEMPT_RT embedded-x86_64 GNU/Linux');break;
+      case 'neofetch':this.pr(`<span class="tok2">       .--.     </span> <span class="ti2">basava@portfolio</span>\n<span class="tok2">      |o_o |    </span> <span class="ti2">OS:</span> <span class="to2">Basava OS v1.0.0</span>\n<span class="tok2">      |:_/ |    </span> <span class="ti2">Kernel:</span> <span class="to2">6.8.0-basava PREEMPT_RT</span>\n<span class="tok2">     //   \\ \\   </span> <span class="ti2">Stack:</span> <span class="to2">Linux · Qt6 · CUDA · OpenCV</span>\n<span class="tok2">    (|     | )  </span> <span class="ti2">Role:</span> <span class="to2">Embedded Engineer</span>\n<span class="tok2">   /'\\_   _/\`\\  </span> <span class="ti2">Coffee:</span> <span class="to2">∞ cups/day</span>`);break;
+      case './contact.sh':this.pr('→ opening contact section...');setTimeout(()=>goTo('#contact'),300);break;
+      case 'github':window.open('https://github.com/basavanidode','_blank');this.pr('→ opening GitHub...');break;
+      case 'linkedin':window.open('https://www.linkedin.com/in/basavakiran9353974163','_blank');this.pr('→ opening LinkedIn...');break;
+      case 'email':window.open('mailto:basavakiran200@gmail.com');this.pr('→ launching email client...');break;
+      case 'theme':if(args[0]&&['void','kernel','plasma','oxide','ghost'].includes(args[0])){TE.apply(args[0]);this.pr(`<span class="tok2">theme: ${args[0]}</span>`)}else this.pr('<span class="te2">usage: theme [void|kernel|plasma|oxide|ghost]</span>');break;
+      case 'history':S.tHist.slice(0,15).forEach((h,i)=>this.pr(`<span class="to2">${String(i+1).padStart(3,' ')}</span>  ${h}`));break;
+      case 'clear':document.getElementById('t-body').innerHTML='';break;
+      case 'help':this.pr(THELP);break;
+      case 'sudo':if(args[0]==='hire-me')EE.matrix();else this.pr('<span class="te2">sudo: permission denied. try: sudo hire-me 😉</span>');break;
+      case 'pwd':this.pr('/home/basava/portfolio');break;
+      case 'date':this.pr(new Date().toString());break;
+      case 'echo':this.pr(args.join(' ')||' ');break;
+      case 'exit':case 'quit':TW.close();break;
+      default:this.pr(`<span class="te2">${c}: command not found — type <span class="tok2">help</span></span>`);
+    }
+  }
+};
+document.getElementById('t-inp').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){const v=e.target.value;e.target.value='';TW.exec(v)}
+  else if(e.key==='ArrowUp'){e.preventDefault();if(S.tHistIdx<S.tHist.length-1){S.tHistIdx++;e.target.value=S.tHist[S.tHistIdx]||''}}
+  else if(e.key==='ArrowDown'){e.preventDefault();S.tHistIdx>0?(e.target.value=S.tHist[--S.tHistIdx]||''):(S.tHistIdx=-1,e.target.value='')}
+  else if(e.key==='Escape')TW.close();
+});
+document.getElementById('term-fab').addEventListener('click',()=>TW.toggle());
+document.getElementById('t-close').addEventListener('click',()=>TW.close());
+
+/* ── LABS (unchanged) ── */
+function initLabs(){
+  const sC=document.getElementById('lab-sig'),sX=sC.getContext('2d'),sW=sC.width,sH=sC.height;
+  let sT=0,sRaf=null;
+  function drawSig(){
+    sX.clearRect(0,0,sW,sH);sX.fillStyle='rgba(8,8,15,.9)';sX.fillRect(0,0,sW,sH);
+    sX.strokeStyle='rgba(139,92,246,.07)';sX.lineWidth=1;
+    for(let x=0;x<sW;x+=40){sX.beginPath();sX.moveTo(x,0);sX.lineTo(x,sH);sX.stroke()}
+    for(let y=0;y<sH;y+=40){sX.beginPath();sX.moveTo(0,y);sX.lineTo(sW,y);sX.stroke()}
+    const col=getComputedStyle(document.documentElement).getPropertyValue('--v3').trim()||'#a78bfa';
+    sX.beginPath();sX.strokeStyle=col;sX.lineWidth=2.5;sX.shadowColor=col;sX.shadowBlur=4;
+    for(let px=0;px<sW;px++){const t=(px/sW)*Math.PI*2*S.sigFreq+sT;let v=S.sigWave==='sine'?Math.sin(t):S.sigWave==='square'?Math.sign(Math.sin(t)):(t%(2*Math.PI)/Math.PI)-1;const y=sH/2-v*(sH/2-12);px===0?sX.moveTo(px,y):sX.lineTo(px,y)}
+    sX.stroke();sX.shadowBlur=0;sT+=0.04;if(S.sigRunning)sRaf=requestAnimationFrame(drawSig);
+  }
+  drawSig();
+  document.getElementById('sig-play').addEventListener('click',()=>{S.sigRunning=!S.sigRunning;document.getElementById('sig-play').textContent=S.sigRunning?'⏸ pause':'▶ run';document.getElementById('sig-st').textContent=S.sigRunning?'RUNNING':'PAUSED';document.getElementById('sig-st').className='lab-stat '+(S.sigRunning?'run':'pau');if(S.sigRunning)drawSig()});
+  const waves=['sine','square','sawtooth'];let wi=0;
+  document.getElementById('sig-wave').addEventListener('click',()=>{wi=(wi+1)%3;S.sigWave=waves[wi];document.getElementById('sig-wave').textContent=waves[wi]});
+  document.getElementById('sig-freq').addEventListener('input',e=>{S.sigFreq=+e.target.value});
+
+  const gC=document.getElementById('lab-gol'),gX=gC.getContext('2d');
+  const COLS=Math.floor(gC.width/8),ROWS=Math.floor(gC.height/8);
+  let grid=Array.from({length:ROWS},()=>Array.from({length:COLS},()=>Math.random()>.7?1:0));
+  function golStep(){const n=Array.from({length:ROWS},()=>Array(COLS).fill(0));for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){let nb=0;for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){if(!dr&&!dc)continue;nb+=grid[(r+dr+ROWS)%ROWS][(c+dc+COLS)%COLS]}n[r][c]=(grid[r][c]&&(nb===2||nb===3))||(!grid[r][c]&&nb===3)?1:0}grid=n}
+  function drawGol(){gX.fillStyle='rgba(8,8,15,.95)';gX.fillRect(0,0,gC.width,gC.height);gX.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--v3').trim()||'#a78bfa';for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(grid[r][c])gX.fillRect(c*8+1,r*8+1,6,6)}
+  setInterval(()=>{if(S.golRunning){golStep();drawGol()}},100);drawGol();
+  document.getElementById('gol-play').addEventListener('click',()=>{S.golRunning=!S.golRunning;document.getElementById('gol-play').textContent=S.golRunning?'⏸ pause':'▶ run';document.getElementById('gol-st').textContent=S.golRunning?'RUNNING':'PAUSED';document.getElementById('gol-st').className='lab-stat '+(S.golRunning?'run':'pau')});
+  document.getElementById('gol-rand').addEventListener('click',()=>{grid=Array.from({length:ROWS},()=>Array.from({length:COLS},()=>Math.random()>.7?1:0));drawGol()});
+
+  const cC=document.getElementById('lab-clk'),cX=cC.getContext('2d');
+  let clk24=true;
+  function drawClk(){
+    const now=new Date();let h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
+    if(!clk24&&h>12)h-=12;
+    cX.fillStyle='rgba(8,8,15,.95)';cX.fillRect(0,0,cC.width,cC.height);
+    const cs2=getComputedStyle(document.documentElement);
+    const col=cs2.getPropertyValue('--v3').trim()||'#a78bfa',col2=cs2.getPropertyValue('--v4').trim()||'#c4b5fd';
+    [h,m,s].forEach((v,i)=>{
+      const bits=v.toString(2).padStart(6,'0');
+      bits.split('').forEach((b,j)=>{const x=52+i*160+j*22,y=cC.height/2-8;cX.beginPath();cX.arc(x,y,8,0,Math.PI*2);cX.fillStyle=b==='1'?col+'40':'rgba(139,92,246,.08)';cX.fill();cX.strokeStyle=b==='1'?col:'rgba(139,92,246,.2)';cX.lineWidth=b==='1'?1.5:1;cX.stroke();if(b==='1'){cX.shadowColor=col;cX.shadowBlur=6;cX.beginPath();cX.arc(x,y,4,0,Math.PI*2);cX.fillStyle=col;cX.fill();cX.shadowBlur=0}});
+      cX.fillStyle='#8080aa';cX.font='9px JetBrains Mono,monospace';cX.textAlign='center';cX.fillText(['H','M','S'][i],52+i*160+55,cC.height/2+24);
+      cX.fillStyle=col2;cX.font='bold 11px JetBrains Mono,monospace';cX.fillText(String(v).padStart(2,'0'),52+i*160+55,cC.height/2+38);
+    });
+  }
+  setInterval(drawClk,1000);drawClk();
+  document.getElementById('clk-fmt').addEventListener('click',()=>{clk24=!clk24;document.getElementById('clk-fmt').textContent=clk24?'24H':'12H'});
+
+  const pC2=document.getElementById('lab-pwm'),pX2=pC2.getContext('2d');
+  function drawPWM(){
+    const duty=S.pwmDuty/100,W2=pC2.width,H2=pC2.height;
+    pX2.fillStyle='rgba(8,8,15,.95)';pX2.fillRect(0,0,W2,H2);
+    pX2.strokeStyle='rgba(139,92,246,.07)';pX2.lineWidth=1;
+    for(let x=0;x<W2;x+=40){pX2.beginPath();pX2.moveTo(x,0);pX2.lineTo(x,H2);pX2.stroke()}
+    for(let y=0;y<H2;y+=30){pX2.beginPath();pX2.moveTo(0,y);pX2.lineTo(W2,y);pX2.stroke()}
+    const cs2=getComputedStyle(document.documentElement);
+    const col=cs2.getPropertyValue('--cyan').trim()||'#06b6d4';
+    const pw=W2/4,hi=H2*.18,lo=H2*.78;
+    pX2.beginPath();pX2.strokeStyle=col;pX2.lineWidth=2.5;pX2.shadowColor=col;pX2.shadowBlur=5;
+    pX2.moveTo(0,lo);
+    for(let p=0;p<4;p++){const sx=p*pw,onW=pw*duty;pX2.lineTo(sx,lo);pX2.lineTo(sx,hi);pX2.lineTo(sx+onW,hi);pX2.lineTo(sx+onW,lo);pX2.lineTo((p+1)*pw,lo)}
+    pX2.stroke();pX2.shadowBlur=0;
+    const col2=cs2.getPropertyValue('--v3').trim()||'#a78bfa';
+    pX2.fillStyle=col2;pX2.font='10px JetBrains Mono,monospace';pX2.textAlign='left';
+    pX2.fillText(`duty: ${S.pwmDuty}%   period: 250μs   f: 4kHz`,10,H2-10);
+  }
+  drawPWM();
+  document.getElementById('pwm-duty').addEventListener('input',e=>{S.pwmDuty=+e.target.value;document.getElementById('pwm-lbl').textContent=e.target.value+'%';drawPWM()});
+}
+
+document.addEventListener('visibilitychange',()=>{S.golRunning=!document.hidden});
+</script>
+</body></html>
